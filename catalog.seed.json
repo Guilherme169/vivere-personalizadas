@@ -1,0 +1,402 @@
+{
+  "_comment": "Seed real extraído do projeto Lovable sabor-calculado em 2026-05-09 e ajustado com decisões da equipe Vivere. dietFlags inferidas — revisar antes de produção.",
+  "pricingDefaults": {
+    "packaging": 1.61,
+    "delivery": 1.50,
+    "other": 1.00,
+    "monthlyRent": 1500,
+    "monthlyVolume": 1200,
+    "cooksPerShift": 2,
+    "cookSalaryPerMonth": 2000,
+    "markupPercentage": 60,
+    "_note_kitchen": "Campo 'kitchen' do Lovable foi removido — não era usado na fórmula real."
+  },
+  "compositionRules": {
+    "minWeightPerMealG": 200,
+    "maxWeightPerMealG": 600,
+    "maxItemsByCategory": {
+      "protein": 1,
+      "carb": 2,
+      "vegetable": 3,
+      "seasoning": 1,
+      "dairy": 1,
+      "other": 2
+    },
+    "minMealsPerCardapio": 5
+  },
+  "customerPricingRules": {
+    "deliveryFeeBRL": 6.00,
+    "freeDeliveryAtTotalUnits": 6,
+    "discount5pctAtTotalUnits": 11,
+    "discount10pctAtTotalUnits": 16,
+    "priceFormatting": "psychological_99"
+  },
+  "fulfillment": {
+    "minBusinessDays": 3,
+    "supportsPickup": true,
+    "supportsDelivery": true
+  },
+  "ingredients": [
+    {
+      "id": "beef-round-dry",
+      "name": "Carne bovina desfiada (sem molho)",
+      "category": "protein",
+      "pricePerKg": 35.00,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "shredded-dry", "name": "Desfiada", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "sem-lactose"]
+    },
+    {
+      "id": "beef-round-sauce",
+      "name": "Carne bovina desfiada (com molho)",
+      "category": "protein",
+      "pricePerKg": 35.00,
+      "baseYield": 1.0,
+      "preparations": [
+        { "id": "shredded-sauce", "name": "Desfiada", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "sem-lactose"]
+    },
+    {
+      "id": "ground-beef",
+      "name": "Carne bovina moída (patinho)",
+      "category": "protein",
+      "pricePerKg": 33.00,
+      "baseYield": 0.8,
+      "preparations": [
+        { "id": "ground", "name": "Moída", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "sem-lactose"]
+    },
+    {
+      "id": "chicken-breast",
+      "name": "Frango (filé do peito)",
+      "category": "protein",
+      "pricePerKg": 19.00,
+      "baseYield": 0.65,
+      "preparations": [
+        { "id": "shredded", "name": "Desfiado", "yieldFactor": 1 },
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 },
+        { "id": "strips", "name": "Em tiras", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "sem-lactose"]
+    },
+    {
+      "id": "panga-fish",
+      "name": "Peixe (panga)",
+      "category": "protein",
+      "pricePerKg": 34.00,
+      "baseYield": 0.75,
+      "preparations": [
+        { "id": "fillet", "name": "Filé", "yieldFactor": 1 },
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "sem-lactose"]
+    },
+    {
+      "id": "white-rice",
+      "name": "Arroz branco",
+      "category": "carb",
+      "pricePerKg": 4.00,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cooked", "name": "Cozido", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "brown-rice",
+      "name": "Arroz integral",
+      "category": "carb",
+      "pricePerKg": 5.00,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cooked", "name": "Cozido", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "potato",
+      "name": "Batata inglesa",
+      "category": "carb",
+      "pricePerKg": 2.99,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "whole", "name": "Inteira", "yieldFactor": 1 },
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 },
+        { "id": "puree", "name": "Purê", "yieldFactor": 1.1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "sweet-potato",
+      "name": "Batata-doce",
+      "category": "carb",
+      "pricePerKg": 3.29,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "whole", "name": "Inteira", "yieldFactor": 1 },
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 },
+        { "id": "puree", "name": "Purê", "yieldFactor": 1.1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "carioca-beans",
+      "name": "Feijão carioca",
+      "category": "carb",
+      "pricePerKg": 8.72,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cooked", "name": "Cozido", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "black-beans",
+      "name": "Feijão preto",
+      "category": "carb",
+      "pricePerKg": 4.49,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cooked", "name": "Cozido", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "chickpeas",
+      "name": "Grão-de-bico",
+      "category": "carb",
+      "pricePerKg": 16.00,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cooked", "name": "Cozido", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "lentils",
+      "name": "Lentilha",
+      "category": "carb",
+      "pricePerKg": 16.23,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cooked", "name": "Cozida", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "spaghetti",
+      "name": "Massa (espaguete)",
+      "category": "carb",
+      "pricePerKg": 7.00,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cooked", "name": "Cozida", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "cassava",
+      "name": "Aipim",
+      "category": "carb",
+      "pricePerKg": 6.00,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "pieces", "name": "Em pedaços", "yieldFactor": 1 },
+        { "id": "puree", "name": "Purê", "yieldFactor": 1.1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "veg-medley",
+      "name": "Seleta de Legumes (mista)",
+      "category": "vegetable",
+      "pricePerKg": 12.00,
+      "baseYield": 0.88,
+      "preparations": [
+        { "id": "mixed-cubes", "name": "Mista em cubos", "yieldFactor": 1 },
+        { "id": "mixed-grilled", "name": "Mista grelhada", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"],
+      "_note": "Item especial: já conta como variedade — quando selecionado, ocupa todos os 3 slots de legume."
+    },
+    {
+      "id": "zucchini",
+      "name": "Abobrinha",
+      "category": "vegetable",
+      "pricePerKg": 8.49,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 },
+        { "id": "slices", "name": "Em fatias", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "beetroot",
+      "name": "Beterraba",
+      "category": "vegetable",
+      "pricePerKg": 2.99,
+      "baseYield": 0.85,
+      "preparations": [
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 },
+        { "id": "grated", "name": "Ralada", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "broccoli",
+      "name": "Brócolis",
+      "category": "vegetable",
+      "pricePerKg": 13.30,
+      "baseYield": 1,
+      "preparations": [
+        { "id": "florets", "name": "Floretes", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "carrot",
+      "name": "Cenoura",
+      "category": "vegetable",
+      "pricePerKg": 4.00,
+      "baseYield": 0.85,
+      "preparations": [
+        { "id": "whole", "name": "Inteira", "yieldFactor": 1 },
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 },
+        { "id": "strips", "name": "Em tiras", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "chayote",
+      "name": "Chuchu",
+      "category": "vegetable",
+      "pricePerKg": 3.99,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 },
+        { "id": "strips", "name": "Em tiras", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "cauliflower",
+      "name": "Couve-flor",
+      "category": "vegetable",
+      "pricePerKg": 12.48,
+      "baseYield": 1,
+      "preparations": [
+        { "id": "florets", "name": "Floretes", "yieldFactor": 1 },
+        { "id": "rice", "name": "Arroz de couve-flor", "yieldFactor": 0.9 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "peas",
+      "name": "Ervilha (enlatada)",
+      "category": "vegetable",
+      "pricePerKg": 19.12,
+      "baseYield": 1,
+      "preparations": [
+        { "id": "whole", "name": "Inteira", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "corn",
+      "name": "Milho verde (enlatado)",
+      "category": "vegetable",
+      "pricePerKg": 19.35,
+      "baseYield": 1,
+      "preparations": [
+        { "id": "kernels", "name": "Grãos", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "pumpkin",
+      "name": "Moranga",
+      "category": "vegetable",
+      "pricePerKg": 1.95,
+      "baseYield": 0.85,
+      "preparations": [
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 },
+        { "id": "puree", "name": "Purê", "yieldFactor": 1.1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "bell-pepper",
+      "name": "Pimentão",
+      "category": "vegetable",
+      "pricePerKg": 17.49,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "strips", "name": "Em tiras", "yieldFactor": 1 },
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "tomato",
+      "name": "Tomate",
+      "category": "vegetable",
+      "pricePerKg": 4.99,
+      "baseYield": 0.9,
+      "preparations": [
+        { "id": "cubes", "name": "Em cubos", "yieldFactor": 1 },
+        { "id": "slices", "name": "Em fatias", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "green-beans",
+      "name": "Vagem",
+      "category": "vegetable",
+      "pricePerKg": 15.99,
+      "baseYield": 0.85,
+      "preparations": [
+        { "id": "whole", "name": "Inteira", "yieldFactor": 1 },
+        { "id": "chopped", "name": "Picada", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "no-seasoning",
+      "name": "Sem temperos",
+      "category": "seasoning",
+      "pricePerKg": 0.00,
+      "baseYield": 1,
+      "preparations": [
+        { "id": "none", "name": "Sem temperos", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "basic-seasoning",
+      "name": "Temperos básicos",
+      "category": "seasoning",
+      "pricePerKg": 2.00,
+      "baseYield": 1,
+      "preparations": [
+        { "id": "basic", "name": "Temperos básicos", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    },
+    {
+      "id": "herbs-seasoning",
+      "name": "Ervas finas",
+      "category": "seasoning",
+      "pricePerKg": 5.00,
+      "baseYield": 1,
+      "preparations": [
+        { "id": "herbs", "name": "Ervas finas", "yieldFactor": 1 }
+      ],
+      "dietFlags": ["sem-gluten", "vegano", "vegetariano", "sem-lactose"]
+    }
+  ]
+}
