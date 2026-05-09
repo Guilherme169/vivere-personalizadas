@@ -1,3 +1,4 @@
+import { CircleCheck } from 'lucide-react'
 import { Logo } from '@/features/shared/components/Logo'
 import { useWizardStore } from '@/features/meal-builder/store/wizardStore'
 
@@ -13,7 +14,9 @@ export function ConfirmationScreen() {
     <div className="min-h-dvh bg-creme flex flex-col items-center justify-center px-6 text-center animate-fade-up">
       <Logo variant="verde" size="md" className="mb-8" />
 
-      <div className="text-5xl mb-6">✅</div>
+      <div className="flex items-center justify-center h-20 w-20 rounded-full bg-verde-vivo/12 text-verde-vivo mb-6">
+        <CircleCheck size={48} strokeWidth={1.75} />
+      </div>
 
       <h1 className="font-display font-semibold text-[32px] leading-[1.1] text-verde-escuro mb-3">
         Pedido enviado!

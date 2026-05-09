@@ -27,11 +27,3 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   other: 'Outros',
 }
 
-export const CATEGORY_EMOJI: Record<Category, string> = {
-  protein: '🥩',
-  carb: '🍚',
-  vegetable: '🥦',
-  seasoning: '🌿',
-  dairy: '🥛',
-  other: '➕',
-}

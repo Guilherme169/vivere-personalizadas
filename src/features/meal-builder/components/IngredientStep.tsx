@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search } from 'lucide-react'
 import { AppHeader } from '@/features/shared/components/AppHeader'
+import { CategoryIcon } from '@/features/shared/components/CategoryIcon'
 import { useWizardStore } from '../store/wizardStore'
 import { CompositionDrawer } from './CompositionDrawer'
 import { canAddItem } from '@/domain/meal'
@@ -62,9 +63,9 @@ export function IngredientStep() {
                   !check.allowed ? 'opacity-40 cursor-not-allowed' : '',
                 ].join(' ')}
               >
-                {/* Placeholder icon */}
-                <div className="h-12 w-12 rounded-2xl bg-creme flex items-center justify-center shrink-0 text-xl">
-                  🥘
+                {/* Placeholder icon — usa o ícone da categoria do ingrediente */}
+                <div className="h-12 w-12 rounded-2xl bg-verde-vivo/10 flex items-center justify-center shrink-0 text-verde-escuro">
+                  <CategoryIcon category={ing.category} size={22} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-[15px] text-verde-escuro truncate">{ing.name}</p>

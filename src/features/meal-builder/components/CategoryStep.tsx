@@ -1,8 +1,9 @@
 import { AppHeader } from '@/features/shared/components/AppHeader'
+import { CategoryIcon } from '@/features/shared/components/CategoryIcon'
 import { useWizardStore } from '../store/wizardStore'
 import { CompositionDrawer } from './CompositionDrawer'
 import { isCategoryFull, categorySelectedCount } from '@/domain/meal'
-import { CATEGORY_LABEL, CATEGORY_EMOJI } from '@/domain/catalog'
+import { CATEGORY_LABEL } from '@/domain/catalog'
 import type { Category } from '@/domain/catalog'
 
 const CATEGORIES: Category[] = ['protein', 'carb', 'vegetable', 'seasoning', 'dairy', 'other']
@@ -45,7 +46,12 @@ export function CategoryStep() {
                 full ? 'opacity-40 cursor-not-allowed' : 'hover:shadow-lg',
               ].join(' ')}
             >
-              <span className="text-3xl">{CATEGORY_EMOJI[cat]}</span>
+              <div className={[
+                'flex items-center justify-center h-14 w-14 rounded-2xl',
+                full ? 'bg-borda/40 text-texto-suave' : 'bg-verde-vivo/10 text-verde-escuro',
+              ].join(' ')}>
+                <CategoryIcon category={cat} size={28} />
+              </div>
               <span className="font-medium text-[13px] text-verde-escuro text-center leading-tight">
                 {CATEGORY_LABEL[cat]}
               </span>
