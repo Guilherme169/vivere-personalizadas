@@ -23,7 +23,7 @@ export function AppHeader({ onBack, showLogo = true, rightSlot }: AppHeaderProps
       </div>
 
       <div className="flex-1 flex justify-center">
-        {showLogo && <Logo variant="verde" size="sm" />}
+        {showLogo && <Logo size="md" />}
       </div>
 
       <div className="w-10 flex justify-end">

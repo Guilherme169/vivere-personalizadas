@@ -6,7 +6,7 @@ interface LogoProps {
   variant?: 'verde' | 'laranja'
   /** Renderiza o lockup com o slogan (logo + tagline). Default: false. */
   withSlogan?: boolean
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }
 
@@ -14,6 +14,7 @@ const heights: Record<NonNullable<LogoProps['size']>, number> = {
   sm: 28,
   md: 40,
   lg: 64,
+  xl: 96,
 }
 
 export function Logo({

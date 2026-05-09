@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react'
 import { Logo } from '@/features/shared/components/Logo'
 import { useWizardStore } from '../store/wizardStore'
 
@@ -11,12 +12,9 @@ export function HeroScreen() {
 
   return (
     <main className="min-h-dvh bg-creme flex flex-col">
-      <header className="flex justify-center px-4 pt-12 pb-4">
-        <Logo variant="verde" size="md" />
-      </header>
-
-      <section className="flex flex-col flex-1 items-center justify-center px-6 pb-36 text-center animate-fade-up">
-        <Logo variant="verde" size="lg" className="mb-8" />
+      <section className="flex flex-col flex-1 items-center justify-center px-6 pt-16 pb-36 text-center animate-fade-up">
+        {/* Lockup com slogan — uma única âncora visual da marca */}
+        <Logo withSlogan size="xl" className="mb-10" />
 
         <p className="text-xs font-medium uppercase tracking-[0.08em] text-texto-suave mb-4">
           Configurador de marmitas
@@ -32,20 +30,26 @@ export function HeroScreen() {
           Veja o preço em tempo real.
         </p>
 
-        <div className="mt-10 w-full max-w-xs space-y-2 text-sm text-texto-suave">
-          <div className="flex items-center gap-3">
-            <span className="text-verde-vivo font-medium text-base">✓</span>
+        <ul className="mt-10 w-full max-w-xs space-y-3 text-[15px] text-texto-suave">
+          <li className="flex items-center gap-3">
+            <span className="flex items-center justify-center h-6 w-6 rounded-full bg-verde-vivo/15 text-verde-escuro shrink-0">
+              <Check size={14} strokeWidth={2.5} />
+            </span>
             <span>Mínimo 5 unidades por cardápio</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-verde-vivo font-medium text-base">✓</span>
+          </li>
+          <li className="flex items-center gap-3">
+            <span className="flex items-center justify-center h-6 w-6 rounded-full bg-verde-vivo/15 text-verde-escuro shrink-0">
+              <Check size={14} strokeWidth={2.5} />
+            </span>
             <span>Frete grátis a partir de 6 unidades</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-verde-vivo font-medium text-base">✓</span>
+          </li>
+          <li className="flex items-center gap-3">
+            <span className="flex items-center justify-center h-6 w-6 rounded-full bg-verde-vivo/15 text-verde-escuro shrink-0">
+              <Check size={14} strokeWidth={2.5} />
+            </span>
             <span>Prazo mínimo: 3 dias úteis</span>
-          </div>
-        </div>
+          </li>
+        </ul>
       </section>
 
       <div

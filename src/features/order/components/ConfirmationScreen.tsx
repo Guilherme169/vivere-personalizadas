@@ -12,7 +12,7 @@ export function ConfirmationScreen() {
 
   return (
     <div className="min-h-dvh bg-creme flex flex-col items-center justify-center px-6 text-center animate-fade-up">
-      <Logo variant="verde" size="md" className="mb-8" />
+      <Logo withSlogan size="lg" className="mb-10" />
 
       <div className="flex items-center justify-center h-20 w-20 rounded-full bg-verde-vivo/12 text-verde-vivo mb-6">
         <CircleCheck size={48} strokeWidth={1.75} />
