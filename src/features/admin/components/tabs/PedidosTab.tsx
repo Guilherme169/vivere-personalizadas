@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Download, Trash2 } from 'lucide-react'
 import { services } from '@/infrastructure/ServiceFactory'
 import type { Order } from '@/domain/order'
@@ -7,14 +7,29 @@ import { calculateOrderPricing } from '@/domain/pricing'
 import { useAdminStore } from '../../store/adminStore'
 
 function useOrders() {
-  const [orders, setOrders] = useState<Order[]>(() => services.orderRepo.list())
-  const reload = useCallback(() => setOrders(services.orderRepo.list()), [])
-  return { orders, reload }
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const reload = useCallback(async () => {
+    setLoading(true)
+    try {
+      const list = await services.orderRepo.list()
+      setOrders(list)
+    } catch (err) {
+      console.error('Failed to load orders:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { reload() }, [reload])
+
+  return { orders, loading, reload }
 }
 
 export function PedidosTab() {
   const { data } = useAdminStore()
-  const { orders, reload } = useOrders()
+  const { orders, loading, reload } = useOrders()
 
   function handleExport() {
     const blob = new Blob([JSON.stringify(orders, null, 2)], { type: 'application/json' })
@@ -26,10 +41,18 @@ export function PedidosTab() {
     URL.revokeObjectURL(url)
   }
 
-  function handleClear() {
-    if (!confirm('Apagar todos os pedidos do localStorage?')) return
-    services.orderRepo.clear()
+  async function handleClear() {
+    if (!confirm('Limpar todos os pedidos locais?')) return
+    await services.orderRepo.clear()
     reload()
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-8 w-8 rounded-full border-2 border-verde-escuro/30 border-t-verde-escuro animate-spin" />
+      </div>
+    )
   }
 
   return (

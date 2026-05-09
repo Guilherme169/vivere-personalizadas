@@ -1,7 +1,7 @@
 import type { Order } from '@/domain/order'
 
 export interface OrderRepository {
-  persist(order: Order): void
-  list(): Order[]
-  clear(): void
+  persist(order: Order): Promise<void>
+  list(): Promise<Order[]>
+  clear(): Promise<void>
 }

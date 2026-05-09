@@ -1,4 +1,4 @@
-import type { CatalogData } from '@/application/ports'
+import type { CatalogData, IngredientRepository } from '@/application/ports'
 import seedRaw from '../seed/catalog.seed.json'
 
 const LS_KEY = 'vivere:catalog'
@@ -18,8 +18,8 @@ function parseSeed(): CatalogData {
   }
 }
 
-export const IngredientRepositoryLocal: import('@/application/ports').IngredientRepository = {
-  load(): CatalogData {
+export const IngredientRepositoryLocal: IngredientRepository = {
+  async load(): Promise<CatalogData> {
     try {
       const raw = localStorage.getItem(LS_KEY)
       if (raw) return JSON.parse(raw) as CatalogData
@@ -29,7 +29,7 @@ export const IngredientRepositoryLocal: import('@/application/ports').Ingredient
     return parseSeed()
   },
 
-  save(data: CatalogData): void {
+  async save(data: CatalogData): Promise<void> {
     localStorage.setItem(LS_KEY, JSON.stringify(data))
   },
 }

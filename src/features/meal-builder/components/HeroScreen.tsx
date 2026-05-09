@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Check } from 'lucide-react'
 import { Logo } from '@/features/shared/components/Logo'
 import { useWizardStore } from '../store/wizardStore'
@@ -5,8 +6,10 @@ import { useWizardStore } from '../store/wizardStore'
 export function HeroScreen() {
   const { navigate, loadCatalog } = useWizardStore()
 
+  // Pre-load catalog while user reads the hero, so it's ready on click
+  useEffect(() => { loadCatalog() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   function handleStart() {
-    loadCatalog()
     navigate('category', 'forward')
   }
 

@@ -9,6 +9,6 @@ export interface CatalogData {
 }
 
 export interface IngredientRepository {
-  load(): CatalogData
-  save(data: CatalogData): void
+  load(): Promise<CatalogData>
+  save(data: CatalogData): Promise<void>
 }

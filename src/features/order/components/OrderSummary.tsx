@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { AppHeader } from '@/features/shared/components/AppHeader'
 import { useWizardStore } from '@/features/meal-builder/store/wizardStore'
 import { buildWhatsAppMessage } from '@/application/useCases/order/buildWhatsAppMessage'
-import { OrderRepositoryLocal } from '@/infrastructure/repositories/OrderRepositoryLocal'
+import { services } from '@/infrastructure/ServiceFactory'
 import { calculateMealPrice, calculateOrderPricing, formatPrice99, formatBRL } from '@/domain/pricing'
 import { totalWeight, suggestContainer, CONTAINER_LABEL, computeDietBadges, DIET_FLAG_LABEL } from '@/domain/meal'
 import { CATEGORY_LABEL } from '@/domain/catalog'
@@ -39,7 +39,7 @@ export function OrderSummary() {
       fulfillment,
       notes: notes || undefined,
     }
-    OrderRepositoryLocal.persist(order)
+    services.orderRepo.persist(order).catch(err => console.error('Failed to persist order:', err))
 
     window.open(payload.url, '_blank')
     navigate('confirmation', 'forward')

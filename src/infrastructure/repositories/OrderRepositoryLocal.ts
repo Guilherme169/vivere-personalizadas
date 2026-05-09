@@ -4,13 +4,13 @@ import type { OrderRepository } from '@/application/ports'
 const LS_KEY = 'vivere:orders'
 
 export const OrderRepositoryLocal: OrderRepository = {
-  persist(order: Order): void {
-    const existing = this.list()
+  async persist(order: Order): Promise<void> {
+    const existing = await this.list()
     existing.push(order)
     localStorage.setItem(LS_KEY, JSON.stringify(existing))
   },
 
-  list(): Order[] {
+  async list(): Promise<Order[]> {
     try {
       const raw = localStorage.getItem(LS_KEY)
       if (raw) return JSON.parse(raw) as Order[]
@@ -20,7 +20,7 @@ export const OrderRepositoryLocal: OrderRepository = {
     return []
   },
 
-  clear(): void {
+  async clear(): Promise<void> {
     localStorage.removeItem(LS_KEY)
   },
 }

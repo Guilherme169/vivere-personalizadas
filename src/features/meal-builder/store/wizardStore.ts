@@ -37,7 +37,7 @@ interface WizardState {
   notes: string
 
   navigate: (step: WizardStep, direction?: 'forward' | 'back') => void
-  loadCatalog: () => void
+  loadCatalog: () => Promise<void>
   selectCategory: (cat: Category) => void
   selectIngredient: (id: string) => void
   selectPreparation: (id: string) => void
@@ -84,8 +84,8 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   navigate: (step, direction = 'forward') => set({ step, direction }),
 
-  loadCatalog: () => {
-    const data = services.ingredientRepo.load()
+  loadCatalog: async () => {
+    const data = await services.ingredientRepo.load()
     set({
       catalog: data.ingredients,
       pricingConfig: data.pricingConfig,

@@ -1,25 +1,48 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Lock } from 'lucide-react'
 import { Logo } from '@/features/shared/components/Logo'
-import { ENV } from '@/infrastructure/config'
+import { supabase } from '@/infrastructure/supabase/client'
 import { AdminPanel } from './AdminPanel'
 
 export function AdminGate() {
-  const [input, setInput] = useState('')
-  const [error, setError] = useState(false)
-  const [unlocked, setUnlocked] = useState(false)
+  const [checking, setChecking] = useState(true)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthenticated(!!data.session)
+      setChecking(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthenticated(!!session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (input === ENV.adminPassword) {
-      setUnlocked(true)
-    } else {
-      setError(true)
-      setInput('')
-    }
+    setLoading(true)
+    setError('')
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    if (authError) setError(authError.message)
+    setLoading(false)
   }
 
-  if (unlocked) return <AdminPanel />
+  if (checking) {
+    return (
+      <div className="min-h-dvh bg-creme flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-verde-escuro/30 border-t-verde-escuro animate-spin" />
+      </div>
+    )
+  }
+
+  if (authenticated) return <AdminPanel />
 
   return (
     <div className="min-h-dvh bg-creme flex flex-col items-center justify-center px-6">
@@ -35,27 +58,36 @@ export function AdminGate() {
         <h1 className="font-display font-semibold text-[22px] text-verde-escuro text-center mb-1">
           Painel Admin
         </h1>
-        <p className="text-sm text-texto-suave text-center mb-6">Digite a senha para continuar</p>
+        <p className="text-sm text-texto-suave text-center mb-6">Entre com seu e-mail e senha</p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
+          <input
+            type="email"
+            autoComplete="email"
+            placeholder="E-mail"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setError('') }}
+            className="w-full h-12 rounded-2xl bg-creme border border-borda px-4 text-[15px] placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-verde-escuro/30"
+          />
           <input
             type="password"
             autoComplete="current-password"
             placeholder="Senha"
-            value={input}
-            onChange={e => { setInput(e.target.value); setError(false) }}
+            value={password}
+            onChange={e => { setPassword(e.target.value); setError('') }}
             className={[
               'w-full h-12 rounded-2xl bg-creme border px-4 text-[15px] placeholder:text-texto-suave',
               'focus:outline-none focus:ring-2 focus:ring-verde-escuro/30',
               error ? 'border-red-400' : 'border-borda',
             ].join(' ')}
           />
-          {error && <p className="text-xs text-aviso">Senha incorreta.</p>}
+          {error && <p className="text-xs text-aviso">{error}</p>}
           <button
             type="submit"
-            className="w-full h-12 rounded-2xl bg-verde-escuro text-white font-medium text-[15px] hover:bg-verde-escuro-hover active:scale-[0.98] transition-all"
+            disabled={loading}
+            className="w-full h-12 rounded-2xl bg-verde-escuro text-white font-medium text-[15px] hover:bg-verde-escuro-hover active:scale-[0.98] transition-all disabled:opacity-60"
           >
-            Entrar
+            {loading ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
       </div>

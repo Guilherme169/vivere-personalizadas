@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, Save } from 'lucide-react'
+import { ChevronLeft, Save, LogOut } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Logo } from '@/features/shared/components/Logo'
+import { supabase } from '@/infrastructure/supabase/client'
 import { useAdminStore } from '../store/adminStore'
 import { CustosFixosTab } from './tabs/CustosFixosTab'
 import { OperacionalTab } from './tabs/OperacionalTab'
@@ -11,7 +13,25 @@ import { PreviewTab } from './tabs/PreviewTab'
 import { PedidosTab } from './tabs/PedidosTab'
 
 export function AdminPanel() {
-  const { dirty, persist } = useAdminStore()
+  const { dirty, persist, reload, loading } = useAdminStore()
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => { reload() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await persist()
+    } catch {
+      // error already logged in store
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+  }
 
   return (
     <div className="min-h-dvh bg-creme">
@@ -24,20 +44,36 @@ export function AdminPanel() {
           <span className="text-sm font-medium text-texto-suave">Admin</span>
         </div>
 
-        <button
-          onClick={persist}
-          disabled={!dirty}
-          className={[
-            'flex items-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium transition-all active:scale-[0.98]',
-            dirty
-              ? 'bg-laranja text-white shadow-cta hover:bg-laranja-hover'
-              : 'bg-surface border border-borda text-texto-suave opacity-50 cursor-not-allowed',
-          ].join(' ')}
-        >
-          <Save size={15} />
-          {dirty ? 'Salvar' : 'Salvo'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSave}
+            disabled={!dirty || saving || loading}
+            className={[
+              'flex items-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium transition-all active:scale-[0.98]',
+              dirty && !saving
+                ? 'bg-laranja text-white shadow-cta hover:bg-laranja-hover'
+                : 'bg-surface border border-borda text-texto-suave opacity-50 cursor-not-allowed',
+            ].join(' ')}
+          >
+            <Save size={15} />
+            {saving ? 'Salvando…' : dirty ? 'Salvar' : 'Salvo'}
+          </button>
+
+          <button
+            onClick={handleSignOut}
+            className="h-9 w-9 rounded-xl bg-surface border border-borda flex items-center justify-center text-texto-suave hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors"
+            title="Sair"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
       </header>
+
+      {loading && (
+        <div className="flex justify-center py-8">
+          <div className="h-7 w-7 rounded-full border-2 border-verde-escuro/30 border-t-verde-escuro animate-spin" />
+        </div>
+      )}
 
       <div className="px-4 py-5">
         <Tabs defaultValue="custos" className="w-full">
