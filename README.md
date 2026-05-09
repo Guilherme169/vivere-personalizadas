@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# Vivere Personalizadas
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Configurador de marmitas personalizadas sob encomenda. React 19 + TypeScript 6 + Vite 8 + Tailwind v4 + Zustand.
 
-Currently, two official plugins are available:
+## Pré-requisitos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node 20+
+- npm 10+
 
-## React Compiler
+## Comandos
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev        # inicia servidor de desenvolvimento com HMR
+npm run build      # type-check + build de produção
+npm run preview    # preview do build de produção
+npm run lint       # ESLint
+npm run test       # Vitest (suite: pricing, composição, pedido)
+npm run test:ui    # Vitest com UI interativa
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Variáveis de ambiente
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Crie `.env.local` na raiz (não versionar):
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_WHATSAPP_NUMBER=555180889884   # número sem + nem espaços
+VITE_ADMIN_PASSWORD=vivere1213      # senha do painel /admin
+VITE_BRAND_NAME=Vivere              # nome da marca
 ```
+
+Se não definidas, os defaults acima são usados.
+
+## Painel Admin
+
+Acesse `/admin` no navegador e insira a senha (`VITE_ADMIN_PASSWORD`).
+
+Funcionalidades:
+- **Custos Fixos** — embalagem, entrega, outros
+- **Operacional** — aluguel, volume, cozinheiros, salário, markup; mostra custos fixos derivados em tempo real
+- **Regras do Cliente** — taxa de entrega, limiares de frete grátis e descontos 5%/10%
+- **Ingredientes** — CRUD completo com exportar/importar JSON; persiste em `localStorage`
+- **Prévia** — mostra formação de preço com a composição-exemplo (150g frango + 100g arroz + 100g brócolis)
+- **Pedidos** — auditoria dos pedidos salvos no `localStorage`, exportar JSON, limpar
+
+## Editando o catálogo de ingredientes
+
+O catálogo seed fica em `src/infrastructure/seed/catalog.seed.json`. Este arquivo é a base carregada na primeira visita (ou quando o `localStorage` está vazio). Para sobrescrever o catálogo em produção, use "Exportar JSON" no Admin após editar, versionando o arquivo exportado.
+
+## Arquitetura
+
+Veja `docs/ARCHITECTURE.md` para a estrutura completa de pastas e decisões técnicas.
+
+- `src/domain/` — tipos e lógica pura (sem dependências externas)
+- `src/application/` — ports (interfaces de repositório) e use cases
+- `src/infrastructure/` — implementações concretas (localStorage, seed, config)
+- `src/features/` — componentes React por feature
+- `src/__tests__/` — testes Vitest (pricing engine, regras de composição, cálculo de pedido)

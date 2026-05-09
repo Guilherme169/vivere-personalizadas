@@ -1,29 +1,30 @@
 # ARCHITECTURE.md — Arquitetura Técnica
 
+_Atualizado: Fase 3 (2026-05-09). Substitui a versão anterior que descreve a arquitetura pré-refator._
+
+---
+
 ## 1. Princípios Fundamentais
 
-### 1.1 Dependency Rule (Clean Architecture)
-Dependências sempre apontam para dentro — do framework para o domínio, nunca o contrário.
+### Dependency Rule
+Dependências sempre apontam para dentro:
 
 ```
-React / Vite / shadcn         ← camada mais externa
+features (React/UI)
     ↓ depende de
-Application (use cases)
+application (ports, use cases)
     ↓ depende de
-Domain (entities, rules)      ← camada mais interna
+domain (tipos puros, regras puras)
     ↑ NUNCA depende de nada acima
 ```
 
-**Consequência prática:** código em `/domain` não tem nenhum import de React, Zustand, localStorage, fetch ou biblioteca externa. É TypeScript puro. Pode ser testado com Node.js, executado em qualquer ambiente.
+`src/domain/` é TypeScript puro — sem React, Zustand, localStorage, fetch. Testável com Node.js puro.
 
-### 1.2 Feature-Based Modularity
-Cada feature (`meal-builder`, `order-summary`) é um módulo coeso. Features não importam de outras features. Comunicação entre features passa pela camada de domínio ou por stores globais explícitos.
+### Feature-Based UI
+Cada feature é um módulo coeso em `src/features/`. Features comunicam-se via stores Zustand ou domain, nunca importando umas das outras diretamente.
 
-### 1.3 Configuração sobre Hardcode
-Cardápio, preços e regras de gramatura são dados de configuração, não constantes no código. Hoje é um arquivo JSON/TypeScript. Amanhã é uma API. O código não sabe a diferença.
-
-### 1.4 Extensibilidade via Composição
-Regras de precificação são objetos que implementam a mesma interface `PricingRule`. Adicionar uma nova regra = criar um novo arquivo + registrar na chain. Zero modificação nas regras existentes.
+### Repositórios como portas
+`IngredientRepository` e `OrderRepository` são interfaces em `application/ports/`. As implementações concretas em `infrastructure/repositories/` usam localStorage hoje e podem ser trocadas por Supabase sem tocar na UI.
 
 ---
 
@@ -31,450 +32,129 @@ Regras de precificação são objetos que implementam a mesma interface `Pricing
 
 ```
 src/
-├── domain/                          # Núcleo do negócio — zero deps externas
+├── domain/
+│   ├── catalog/          # Ingredient, Preparation, Category, DietFlag, CATEGORY_LABEL
 │   ├── meal/
-│   │   ├── entities/
-│   │   │   ├── Meal.ts              # Aggregate root — composição e validação
-│   │   │   └── Ingredient.ts        # Ingrediente com propriedades de negócio
-│   │   ├── value-objects/
-│   │   │   ├── ContainerSize.ts     # Enum P/M/G/GG com capacidade em gramas
-│   │   │   ├── IngredientCategory.ts
-│   │   │   └── Gramatura.ts
+│   │   ├── index.ts      # re-exports: canAddItem, suggestContainer, computeDietBadges, DIET_FLAG_LABEL
+│   │   ├── ContainerSize.ts
 │   │   └── rules/
-│   │       ├── MealCompositionRules.ts  # Valida composição obrigatória
-│   │       └── GramaturaRules.ts        # Limites por categoria/tamanho
+│   │       ├── composition.ts   # canAddItem, suggestContainer, veg-medley exclusivity
+│   │       └── dietBadges.ts    # computeDietBadges, DIET_FLAG_LABEL
+│   ├── cardapio/         # CompositionItem, Cardapio
+│   ├── order/            # Order, Customer, Fulfillment
 │   ├── pricing/
-│   │   ├── value-objects/
-│   │   │   ├── Money.ts             # Valor em centavos + currency
-│   │   │   └── PriceBreakdown.ts    # Preço base + adjustments + total
-│   │   └── rules/
-│   │       ├── PricingRule.ts       # Interface base para todas as regras
-│   │       ├── BasePricingRule.ts   # Preço pelo tamanho do container
-│   │       ├── PremiumIngredientRule.ts
-│   │       ├── ExtraPortionRule.ts
-│   │       └── PricingEngine.ts     # Orquestra chain de regras
-│   └── order/
-│       ├── entities/
-│       │   └── Order.ts             # Aggregate de pedido completo
-│       └── value-objects/
-│           └── OrderStatus.ts
+│   │   ├── types.ts      # PricingConfig, CompositionRules, CustomerPricingRules, MealPriceResult, OrderPricing
+│   │   └── engine.ts     # calculateItemCost, calculateMealPrice, calculateOrderPricing, formatPrice99, formatBRL
+│   └── shared/           # (reservado para Money, Result se necessário)
 │
-├── application/                     # Casos de uso — orquestra domínio
-│   ├── meal-builder/
-│   │   ├── BuildMealUseCase.ts      # Adicionar/remover ingrediente
-│   │   └── ValidateMealUseCase.ts   # Retorna lista de erros de validação
-│   ├── pricing/
-│   │   └── CalculatePriceUseCase.ts # Recebe Meal, retorna PriceBreakdown
-│   └── order/
-│       ├── CreateOrderUseCase.ts    # Monta Order a partir de Meals
-│       └── FormatWhatsAppUseCase.ts # Meal[] + Customer → string formatada
+├── application/
+│   ├── ports/
+│   │   ├── IngredientRepository.ts  # CatalogData interface + IngredientRepository port
+│   │   └── OrderRepository.ts       # OrderRepository port
+│   └── useCases/
+│       └── order/
+│           └── buildWhatsAppMessage.ts   # monta payload + URL wa.me
 │
-├── infrastructure/                  # Detalhes externos — substituíveis
+├── infrastructure/
+│   ├── seed/
+│   │   └── catalog.seed.json            # seed do catálogo (versionado)
+│   ├── repositories/
+│   │   ├── IngredientRepositoryLocal.ts # persiste em localStorage 'vivere:catalog'
+│   │   └── OrderRepositoryLocal.ts      # persiste em localStorage 'vivere:orders'
 │   ├── config/
-│   │   └── menu.config.ts           # Cardápio estático (→ futuro: MenuRepository)
-│   ├── pricing-config/
-│   │   └── pricing.config.ts        # Preços base e regras (→ futuro: API)
-│   ├── storage/
-│   │   └── LocalOrderStorage.ts     # localStorage (→ futuro: API client)
-│   └── whatsapp/
-│       └── WhatsAppFormatter.ts     # Order → link wa.me com mensagem
+│   │   └── index.ts                     # ENV (whatsappNumber, adminPassword, brandName)
+│   └── ServiceFactory.ts                # { ingredientRepo, orderRepo }
 │
-├── features/                        # Módulos React
+├── features/
 │   ├── meal-builder/
-│   │   ├── components/              # UI da montagem da marmita
-│   │   ├── hooks/
-│   │   │   └── useMealBuilder.ts    # Bridge: UI ↔ Application use cases
-│   │   └── store/
-│   │       └── mealBuilderStore.ts  # Estado Zustand local da feature
-│   ├── order-summary/
-│   │   ├── components/
-│   │   └── hooks/
-│   │       └── useOrderSummary.ts
-│   └── menu-admin/                  # Futuro: painel de gestão de cardápio
+│   │   ├── store/
+│   │   │   └── wizardStore.ts           # Zustand: 9 steps, draftItems, cardapios, customer
+│   │   └── components/
+│   │       ├── WizardShell.tsx          # step router + slide animation
+│   │       ├── HeroScreen.tsx
+│   │       ├── CategoryStep.tsx
+│   │       ├── IngredientStep.tsx
+│   │       ├── PreparationStep.tsx
+│   │       ├── GramaturaStep.tsx
+│   │       ├── QuantityStep.tsx
+│   │       ├── AddMoreStep.tsx
+│   │       └── CompositionDrawer.tsx
+│   ├── order/
+│   │   └── components/
+│   │       ├── OrderSummary.tsx          # tela 8: cardápios, preço, form, WhatsApp CTA
+│   │       └── ConfirmationScreen.tsx
+│   ├── admin/
+│   │   ├── store/
+│   │   │   └── adminStore.ts            # Zustand: CatalogData + dirty flag + persist
+│   │   └── components/
+│   │       ├── AdminGate.tsx            # tela de senha
+│   │       ├── AdminPanel.tsx           # shell com 6 tabs
+│   │       ├── IngredienteDialog.tsx    # dialog de add/edit ingrediente
+│   │       └── tabs/
+│   │           ├── CustosFixosTab.tsx
+│   │           ├── OperacionalTab.tsx
+│   │           ├── RegrasClienteTab.tsx
+│   │           ├── IngredientesTab.tsx
+│   │           ├── PreviewTab.tsx
+│   │           └── PedidosTab.tsx
+│   └── shared/
+│       └── components/
+│           ├── AppHeader.tsx
+│           └── Logo.tsx
 │
-├── shared/
-│   ├── components/ui/               # shadcn components (não modificar diretamente)
-│   ├── hooks/                       # hooks genéricos cross-feature
-│   └── lib/
-│       └── utils.ts                 # cn(), formatMoney(), etc.
+├── components/ui/       # shadcn/ui (accordion, badge, button, card, dialog, drawer,
+│                        #           input, label, select, separator, sheet, sonner,
+│                        #           tabs, tooltip)
 │
-└── app/
-    ├── App.tsx
-    └── providers/
-        └── AppProviders.tsx         # Zustand, theme, future: TenantContext
+├── __tests__/
+│   ├── pricing.test.ts      # 6 casos: calculateItemCost (4) + calculateMealPrice (2)
+│   ├── composition.test.ts  # 5 casos: limites de categoria, peso, veg-medley
+│   └── orderPricing.test.ts # 4 casos: frete, frete grátis, desconto 5%, retirada
+│
+├── lib/utils.ts         # cn()
+├── index.css            # design tokens Vivere + @theme inline + animations
+├── App.tsx              # Routes: / → WizardShell, /admin → AdminGate
+└── main.tsx             # BrowserRouter + StrictMode
 ```
 
 ---
 
-## 3. Camadas em Detalhe
+## 3. Pricing Engine
 
-### 3.1 Domain Layer
+Implementado em `src/domain/pricing/engine.ts`. Fórmula conforme BRIEF Seção 5:
 
-**Responsabilidade:** Expressar o negócio em código. Nada mais.
+```
+finalYield       = ingredient.baseYield × preparation.yieldFactor
+costPerKgReady   = ingredient.pricePerKg / finalYield
+costPer100g      = costPerKgReady / 10
+itemCost         = (grams / 100) × costPer100g
 
-**Regras:**
-- Nenhum `import` de React, Zustand, localStorage, fetch, ou qualquer biblioteca
-- Apenas TypeScript, `uuid` (se necessário), e outros modules do domínio
-- Entidades encapsulam invariantes: `Meal` nunca fica em estado inválido silenciosamente
-- Value Objects são imutáveis: `Money.add()` retorna um novo `Money`, não muta
-
-**Exemplo de entidade com invariante:**
-```typescript
-// domain/meal/entities/Meal.ts
-export class Meal {
-  private _items: MealItem[] = []
-
-  addIngredient(ingredient: Ingredient, portionCount = 1): Result<void, ValidationError> {
-    const newItems = [...this._items, { ingredient, portionCount }]
-    const validation = MealCompositionRules.validate(newItems, this.containerSize)
-
-    if (validation.hasGramaturaOverflow) {
-      return Err(new ValidationError('GRAMATURA_OVERFLOW', ...))
-    }
-
-    if (this.hasCategory(ingredient.category)) {
-      return Err(new ValidationError('DUPLICATE_CATEGORY', ...))
-    }
-
-    this._items = newItems
-    return Ok(undefined)
-  }
-
-  get isValid(): boolean {
-    return MealCompositionRules.validate(this._items, this.containerSize).isValid
-  }
-}
+totalIngredientCost = Σ itemCost
+rentPerUnit         = monthlyRent / monthlyVolume
+cookCostPerUnit     = (cooksPerShift × cookSalaryPerMonth) / monthlyVolume
+fixedCostPerUnit    = packaging + delivery + rentPerUnit + cookCostPerUnit + other
+totalCost           = totalIngredientCost + fixedCostPerUnit
+suggestedPrice      = totalCost × (1 + markupPercentage / 100)
+finalPrice          = floor(suggestedPrice) + 0.99
 ```
 
 ---
 
-### 3.2 Application Layer
+## 4. Wizard Steps
 
-**Responsabilidade:** Orquestrar casos de uso. Não contém lógica de negócio — delega para o domínio. Não contém lógica de exibição — delega para a feature.
-
-**Regras:**
-- Funções puras que recebem input e retornam output
-- Podem injetar repositórios/formatters via interface (não implementação concreta)
-- Retornam tipos de domínio, não strings ou objetos ad-hoc
-
-**Exemplo:**
-```typescript
-// application/pricing/CalculatePriceUseCase.ts
-export function calculatePrice(meal: Meal, config: PricingConfig): PriceBreakdown {
-  return PricingEngine.calculate(meal, config)
-}
 ```
+hero → category → ingredient → [preparation?] → gramatura → [quantity →] add-more → summary → confirmation
+```
+
+- `preparation` é pulado se o ingrediente tem apenas 1 forma de preparo
+- `quantity` é a QtyStep que antecede finalizeCardapio
+- `add-more` permite adicionar outro cardápio ou ir para summary
+- Animação via `direction: 'forward'|'back'` + `key={step}` no WizardShell
 
 ---
 
-### 3.3 Infrastructure Layer
-
-**Responsabilidade:** Implementar detalhes externos que o domínio não conhece.
-
-**`menu.config.ts`** — cardápio como array de `Ingredient`. No V2, isso vira uma chamada de API, mas a interface que o domínio vê não muda.
-
-**`pricing.config.ts`** — preços base por tamanho e lista de pricing rules ativas. Permite ajustar precificação sem alterar código de negócio.
-
-**`WhatsAppFormatter.ts`** — transforma `Order` em string. O template da mensagem fica aqui. Se o template mudar, apenas este arquivo muda.
-
-**`LocalOrderStorage.ts`** — salva/recupera rascunho de pedido no localStorage. Implementa interface `OrderStorage` definida na application layer.
-
----
-
-### 3.4 Features Layer
-
-**Responsabilidade:** UI React. Conecta o que o usuário vê com os casos de uso da application layer.
-
-**Padrão de um hook de feature:**
-```typescript
-// features/meal-builder/hooks/useMealBuilder.ts
-export function useMealBuilder() {
-  const store = useMealBuilderStore()
-  const config = useMenuConfig()   // lê infrastructure/config
-
-  const addIngredient = useCallback((ingredient: Ingredient) => {
-    const result = BuildMealUseCase.addIngredient(store.meal, ingredient)
-    if (result.isOk()) {
-      const breakdown = CalculatePriceUseCase.calculate(result.value, config.pricing)
-      store.setMeal(result.value)
-      store.setPriceBreakdown(breakdown)
-    } else {
-      store.addError(result.error)
-    }
-  }, [store, config])
-
-  return { meal: store.meal, breakdown: store.priceBreakdown, addIngredient, ... }
-}
-```
-
-**Regra:** componentes React não chamam application layer diretamente. Passam por hooks da feature.
-
----
-
-## 4. Pricing Engine
-
-O pricing engine é o componente mais crítico. Design baseado em **chain de responsabilidade**.
-
-### 4.1 Interface Base
-```typescript
-// domain/pricing/rules/PricingRule.ts
-export interface PricingRule {
-  readonly name: string
-  apply(meal: Meal, context: PricingContext): PriceAdjustment | null
-}
-
-export interface PriceAdjustment {
-  ruleName: string
-  description: string
-  amount: Money       // pode ser positivo (surcharge) ou negativo (desconto)
-}
-
-export interface PriceBreakdown {
-  basePrice: Money
-  adjustments: PriceAdjustment[]
-  total: Money        // basePrice + sum(adjustments)
-}
-```
-
-### 4.2 Regras MVP
-```typescript
-// 1. Preço base pelo tamanho
-BasePricingRule: ContainerSize → Money
-
-// 2. Surcharge por ingrediente premium
-PremiumIngredientRule: filtra isPremium=true → soma premiumSurcharge de cada um
-
-// 3. Cobrança de porção extra de proteína
-ExtraPortionRule: detecta item com portionCount > 1 → cobra basePrice do ingrediente por porção extra
-
-// 4. Cobrança de adicionais (categoria EXTRA)
-ExtraIngredientRule: filtra category=EXTRA → soma basePrice de cada item
-```
-
-### 4.3 Engine (orquestração)
-```typescript
-// domain/pricing/rules/PricingEngine.ts
-export class PricingEngine {
-  constructor(private rules: PricingRule[]) {}
-
-  calculate(meal: Meal, context: PricingContext): PriceBreakdown {
-    const basePrice = this.rules
-      .find(r => r instanceof BasePricingRule)!
-      .apply(meal, context)!.amount
-
-    const adjustments = this.rules
-      .filter(r => !(r instanceof BasePricingRule))
-      .map(r => r.apply(meal, context))
-      .filter(Boolean) as PriceAdjustment[]
-
-    const total = adjustments.reduce(
-      (acc, adj) => Money.add(acc, adj.amount),
-      basePrice
-    )
-
-    return { basePrice, adjustments, total }
-  }
-}
-```
-
-### 4.4 Regras Futuras (extensões sem modificação)
-```typescript
-// V2 — Plano semanal
-WeeklyPlanDiscountRule: detecta context.isWeeklyPlan → aplica desconto %
-
-// V2 — Combo
-ComboDiscountRule: detecta combinações específicas → aplica desconto fixo
-
-// V3 — Tenant-specific
-TenantPricingRule: lê configuração do tenant → aplica multiplicador
-```
-
----
-
-## 5. State Management
-
-**Biblioteca:** Zustand (já escolhida pela leveza e compatibilidade com feature-based)
-
-**Padrão:** um store por feature, stores pequenos e focados.
-
-```
-mealBuilderStore     — estado da marmita em montagem: Meal, PriceBreakdown, errors, step atual
-orderSummaryStore    — estado do pedido final: Order, customer info
-menuStore            — cardápio disponível (cache do menu.config.ts)
-```
-
-**Regra:** stores não contêm lógica de negócio. São apenas estado + setters. A lógica fica nos hooks de feature.
-
----
-
-## 6. Fluxo de Dados Completo
-
-```
-[User toca em ingrediente]
-        ↓
-[Feature Component] (IngredientCard.tsx)
-        ↓ chama
-[Feature Hook] (useMealBuilder.addIngredient)
-        ↓ chama
-[Application Use Case] (BuildMealUseCase.addIngredient)
-        ↓ chama
-[Domain Entity] (Meal.addIngredient)
-        ↓ chama
-[Domain Rule] (MealCompositionRules.validate)
-        ↓ resultado: Ok | Err
-[Application Use Case] → se Ok:
-        ↓ chama
-[Pricing Use Case] (CalculatePriceUseCase.calculate)
-        ↓ chama
-[Domain: PricingEngine.calculate]
-        ↓ retorna PriceBreakdown
-[Feature Hook] → atualiza
-        ↓
-[Zustand Store] (mealBuilderStore.setMeal + setPriceBreakdown)
-        ↓ dispara re-render
-[Feature Components] (MealSummary, PriceDisplay, GramaturaBar)
-```
-
----
-
-## 7. Contratos de Tipos Principais
-
-```typescript
-// Ingrediente (domain)
-interface Ingredient {
-  id: string
-  name: string
-  category: IngredientCategory
-  unitGramatura: number
-  basePrice: Money
-  isPremium: boolean
-  premiumSurcharge: Money
-  isAvailable: boolean
-  allergens: string[]
-  tags: string[]
-}
-
-// Item na marmita (domain)
-interface MealItem {
-  ingredient: Ingredient
-  portionCount: number          // 1 = padrão; 2 = dobro
-  gramatura: number             // calculado: portionCount × unitGramatura
-}
-
-// Breakdown de preço (domain)
-interface PriceBreakdown {
-  basePrice: Money
-  adjustments: { ruleName: string; description: string; amount: Money }[]
-  total: Money
-}
-
-// Cliente (domain/order)
-interface Customer {
-  name: string
-  phone: string
-}
-
-// Pedido completo (domain/order)
-interface Order {
-  id: string
-  customer: Customer
-  meals: { meal: Meal; breakdown: PriceBreakdown }[]
-  totalPrice: Money
-  notes: string
-  createdAt: Date
-}
-```
-
----
-
-## 8. Preparação para Multi-Tenant
-
-Mesmo no MVP client-side, o código é escrito para facilitar a extração futura.
-
-### 8.1 MenuRepository (não hardcode)
-```typescript
-// application/meal-builder/ports/MenuRepository.ts
-export interface MenuRepository {
-  getAvailableIngredients(): Promise<Ingredient[]>
-}
-
-// infrastructure/config/StaticMenuRepository.ts — implementação MVP
-// infrastructure/api/ApiMenuRepository.ts — implementação V2
-```
-
-### 8.2 TenantContext (preparado, vazio no MVP)
-```typescript
-// app/providers/TenantContext.ts
-interface TenantConfig {
-  id: string
-  name: string
-  brandColor: string
-  whatsappNumber: string
-  pricingConfig: PricingConfig
-}
-
-// MVP: config estática da Vivere
-// V3: carregado via API por subdomínio/slug
-```
-
-### 8.3 IDs em UUID
-Todos os IDs de entidades usam UUID v4 desde o início. Sem autoincrement sequencial.
-
-### 8.4 PricingConfig externalizado
-```typescript
-// infrastructure/pricing-config/pricing.config.ts
-export const VIVERE_PRICING_CONFIG: PricingConfig = {
-  basePrices: {
-    [ContainerSize.SMALL]: money(2200),      // R$ 22,00
-    [ContainerSize.MEDIUM]: money(2800),     // R$ 28,00
-    [ContainerSize.LARGE]: money(3400),      // R$ 34,00
-    [ContainerSize.EXTRA_LARGE]: money(4000),// R$ 40,00
-  },
-  activeRules: ['base', 'premium', 'extra-portion', 'extra-ingredient']
-}
-// V3: cada tenant tem seu próprio PricingConfig carregado da API
-```
-
----
-
-## 9. Preparação para IA / OCR (Fase 4)
-
-A estrutura atual cria os hooks naturais para IA:
-
-| Ponto de extensão | Feature IA futura |
-|---|---|
-| `MenuRepository.getAvailableIngredients()` | Retorna ingredientes reconhecidos por OCR de cardápio fotografado |
-| `Order.meals[]` | Dataset de treinamento para sugestão ("clientes que pediram X também pediram Y") |
-| `PriceBreakdown.adjustments[]` | Input para modelo de otimização de preço por demanda |
-| `MealCompositionRules` | Pode incorporar restrições nutricionais por perfil (low carb mode, etc.) |
-
----
-
-## 10. Roadmap Técnico
-
-### MVP (atual)
-- [ ] Domain model completo (Meal, Ingredient, Order, Money)
-- [ ] PricingEngine com 4 regras base
-- [ ] MealCompositionRules + GramaturaRules
-- [ ] Zustand stores para meal-builder e order-summary
-- [ ] WhatsAppFormatter
-- [ ] menu.config.ts com cardápio da Vivere
-- [ ] pricing.config.ts com preços da Vivere
-
-### V2 — Operacional
-- [ ] Backend API (Node.js / Bun + Hono/Fastify)
-- [ ] Banco de dados (PostgreSQL)
-- [ ] MenuRepository via API (substituindo StaticMenuRepository)
-- [ ] Painel admin de cardápio
-- [ ] Fila de pedidos em tempo real
-
-### V3 — SaaS
-- [ ] TenantContext implementado com isolamento por subdomínio
-- [ ] PricingConfig por tenant (database-driven)
-- [ ] White-label: CSS variables + logo por tenant
-- [ ] Onboarding self-service com configuração guiada de cardápio/preços
-
-### V4 — IA
-- [ ] OCR integration para digitalização de cardápio
-- [ ] Recommendation engine (collaborative filtering)
-- [ ] Demand forecasting para produção
+## 5. Extensibilidade
+
+- **Backend real**: substituir `IngredientRepositoryLocal` e `OrderRepositoryLocal` por implementações que chamam Supabase — zero mudança na UI
+- **Múltiplos clientes (multi-tenant)**: `CatalogData` já inclui `pricingConfig`, `compositionRules`, `customerPricingRules` por instância
+- **Auth admin**: substituir `AdminGate` por Supabase Auth — a API do admin store não muda
