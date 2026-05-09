@@ -143,7 +143,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   finalizeCardapio: (quantity) => {
     const { draftItems, cardapios } = get()
     const newCardapio: Cardapio = {
-      id: `cardapio-${Date.now()}`,
+      id: crypto.randomUUID(),
       items: [...draftItems],
       quantity,
     }

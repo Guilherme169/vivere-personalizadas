@@ -32,14 +32,17 @@ export function OrderSummary() {
     )
 
     const order = {
-      id: `order-${Date.now()}`,
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       cardapios,
       customer,
       fulfillment,
       notes: notes || undefined,
     }
-    services.orderRepo.persist(order).catch(err => console.error('Failed to persist order:', err))
+    services.orderRepo.persist(order).catch(err => {
+      console.error('Failed to persist order:', err)
+      alert('Não conseguimos salvar seu pedido no sistema, mas o WhatsApp foi aberto. Por favor, envie a mensagem para nosso atendente.')
+    })
 
     window.open(payload.url, '_blank')
     navigate('confirmation', 'forward')
