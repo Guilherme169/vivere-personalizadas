@@ -1,2 +1,2 @@
-export type { MenuRepository } from './MenuRepository'
-export type { PricingRepository } from './PricingRepository'
+export type { IngredientRepository, CatalogData } from './IngredientRepository'
+export type { OrderRepository } from './OrderRepository'

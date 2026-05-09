@@ -402,30 +402,138 @@ Regras:
 
 ---
 
-## 9. UI / DESIGN SYSTEM
+## 9. UI / DESIGN SYSTEM (final, aprovado pelo cliente)
 
-**Paleta Vivere (verde + laranja, definida):**
-- Primária verde-floresta: `#2D5F3F`
-- Hover/active verde: `#244C32`
-- Acento laranja terracota: `#E87B3E`
-- Hover/active laranja: `#D26830`
-- Background creme: `#FAF7F2`
-- Surface clara: `#FFFFFF`
-- Texto principal: `#1F2A1F`
-- Texto secundário: `#5C6657`
-- Borda sutil: `#E8E2D6`
+> A Fase 1 aplicou uma paleta intermediária no `src/index.css`. **Este sistema substitui aquele.** O primeiro passo da Fase 2 é reescrever `src/index.css` com os tokens abaixo.
 
-Definir como CSS custom properties em `src/index.css` consumidas pelo Tailwind v4 via `@theme inline`.
+### 9.1 Cores (hex extraídos do logo da marca)
 
-**Tipografia**: Geist Variable (já no projeto). Pesos 400/500/600/700. Base 17px no mobile.
+Cores de marca (reservadas para identidade — usar com restrição):
+- `--color-verde-escuro: #1F4F2E` — wordmark, headings, navegação, ícones sólidos, footer
+- `--color-verde-vivo: #2DBE4D` — folha do logo, badges de restrição, ícones de check, pequenos destaques alimentares
+- `--color-laranja: #F08534` — CTAs principais, preço destacado, hover de elementos verdes
 
-**Botões**: alturas mínimas 48px. Border-radius 16–20px. Sombras suaves.
+Hover/active das cores de marca:
+- `--color-verde-escuro-hover: #173B22`
+- `--color-laranja-hover: #D9742B`
 
-**Logo**: placeholder textual "Vivere" em Geist 700 enquanto não houver arquivo. Quando o user enviar, salvar em `public/logo.svg` e substituir.
+Neutros:
+- `--color-creme: #FAF6EE` — background da página inteira
+- `--color-surface: #FFFFFF` — cards, inputs, painéis
+- `--color-borda: #EDE6D5` — divisores, borda de cards
+- `--color-texto: #1A2A1F` — headings, body principal
+- `--color-texto-suave: #5C6657` — subtítulos, captions, labels
 
-**Animações**: transições CSS simples (slide-x, fade) entre etapas. Não adicionar `framer-motion` por enquanto.
+Semânticos:
+- `--color-sucesso: #2DBE4D` (= verde vivo)
+- `--color-aviso: #F0A434`
+- `--color-erro: #C24438`
 
-**Ícones**: `lucide-react` (já vem com shadcn).
+Mapear todos como CSS custom properties em `:root` no `src/index.css` e expor via `@theme inline` do Tailwind v4 com aliases curtos: `bg-creme`, `bg-surface`, `text-verde-escuro`, `bg-laranja`, `border-borda`, etc. Não usar nomes genéricos tipo `bg-primary` para as cores de marca — quero ver intenção no código.
+
+### 9.2 Hierarquia de uso (regra dura — não relaxar)
+
+| Cor | Quando usar | Quando NÃO usar |
+|---|---|---|
+| Verde escuro | Headings, navegação, ícones sólidos, logo, footer, botão secundário (borda) | Como background grande |
+| Verde vivo | Badges (sem-glúten, vegano), ícones de check, pequenos destaques | Em botões primários |
+| Laranja | CTAs principais (Adicionar, Continuar no WhatsApp), preço destacado, indicador de etapa ativa | Como background, em texto longo |
+| Creme | Background da página inteira | Texto |
+| Branco | Cards, surfaces, inputs | Background da página |
+
+CTA principal é sempre **laranja**. CTA secundário é sempre **verde escuro outline**. Nunca dois CTAs laranja na mesma tela.
+
+### 9.3 Tipografia
+
+Pareamento serif-display + sans-body (clássico premium):
+
+- **Display / headings**: `Fraunces Variable` (Google Fonts via `@fontsource-variable/fraunces`). Pesos 500 e 600. Usar para H1, H2, preço destacado, número de etapa.
+- **Body / UI**: `Geist Variable` (já instalado). Pesos 400, 500, 600. Usar para parágrafo, label, botão, formulário.
+- **Eyebrow / caption** (estilo do slogan do logo): Geist 500 maiúsculo com `letter-spacing: 0.08em` e `text-xs`.
+
+Instalar: `npm install @fontsource-variable/fraunces` e importar em `src/main.tsx`.
+
+Tamanhos base mobile (375px viewport):
+- H1 (hero): Fraunces 600, 36px, line-height 1.1
+- H2 (tela): Fraunces 600, 28px, line-height 1.2
+- H3 (seção): Fraunces 500, 22px, line-height 1.3
+- Body: Geist 400, 17px, line-height 1.5
+- Label: Geist 500, 14px, line-height 1.4
+- Caption: Geist 400, 13px, line-height 1.4
+- Eyebrow: Geist 500, 12px, uppercase, letter-spacing 0.08em
+- Preço destacado: Fraunces 600, 32-40px, tabular-nums
+
+### 9.4 Spacing e Radius
+
+Spacing scale (Tailwind default já atende): 1=4px, 2=8px, 3=12px, 4=16px, 5=20px, 6=24px, 8=32px, 10=40px, 12=48px, 16=64px.
+
+Border-radius:
+- Pequeno (chips, badges): `rounded-full` ou `rounded-xl` (12px)
+- Médio (botões, inputs): `rounded-2xl` (16px)
+- Grande (cards): `rounded-3xl` (24px)
+
+### 9.5 Sombras (warm shadows com tint verde)
+
+```
+--shadow-sm: 0 1px 3px rgba(31, 79, 46, 0.06);
+--shadow-md: 0 2px 12px rgba(31, 79, 46, 0.08);
+--shadow-lg: 0 8px 28px rgba(31, 79, 46, 0.10);
+--shadow-cta: 0 4px 14px rgba(240, 133, 52, 0.30);
+```
+
+Cards usam `shadow-md`. Sticky bottom CTA usa `shadow-lg`. Sombra padrão NUNCA é cinza puro — sempre o tint verde para parecer alimentar.
+
+### 9.6 Component recipes (concretos)
+
+- **Botão primário**: `bg-laranja text-white h-12 rounded-2xl px-6 font-medium shadow-cta hover:bg-laranja-hover active:scale-[0.98] transition-all duration-200`
+- **Botão secundário**: `bg-transparent border border-verde-escuro text-verde-escuro h-12 rounded-2xl px-6 font-medium hover:bg-verde-escuro/5 active:scale-[0.98]`
+- **Botão ghost**: `bg-transparent text-verde-escuro hover:bg-verde-escuro/8 h-11 rounded-xl px-4`
+- **Card de ingrediente** (lista vertical): `bg-surface rounded-3xl p-4 shadow-sm border border-borda flex items-center gap-3 active:scale-[0.99] transition-transform`
+- **Card de categoria** (Hero/grid): `bg-surface rounded-3xl p-6 shadow-md flex flex-col items-center gap-3 aspect-square active:scale-[0.98]` + ícone `text-verde-escuro h-8 w-8`
+- **Chip de gramatura**: `h-11 px-5 rounded-full bg-creme border border-borda text-verde-escuro data-[active=true]:bg-verde-escuro data-[active=true]:text-white data-[active=true]:border-transparent`
+- **Badge de restrição** (ex: "Sem glúten ✓"): `inline-flex items-center gap-1 h-7 px-3 rounded-full bg-verde-vivo/12 text-verde-escuro text-xs font-medium`
+- **Display de preço**: `font-display font-semibold text-4xl text-verde-escuro tabular-nums`
+- **Bottom sticky CTA**: `fixed bottom-0 inset-x-0 bg-surface/95 backdrop-blur border-t border-borda px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-2 z-40`
+- **Input**: `bg-surface border border-borda rounded-2xl h-12 px-4 text-base placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-verde-escuro/30`
+- **Step indicator**: dots ou barra com `bg-borda` para inativo, `bg-laranja` para ativo, `bg-verde-escuro` para concluído.
+
+### 9.7 Motion
+
+Easing padrão: `cubic-bezier(0.2, 0.8, 0.2, 1)` (Apple-like). Definir em CSS:
+```
+--ease-out-expo: cubic-bezier(0.2, 0.8, 0.2, 1);
+```
+
+- Botão tap: `active:scale-[0.98]` em 150ms.
+- Card tap: `active:scale-[0.99]` em 150ms.
+- Troca de etapa do wizard: slide-x 250ms `--ease-out-expo` + fade 200ms.
+- Drawer da composição: slide-y 280ms.
+- Hover em desktop: opacity/cor 200ms.
+
+NÃO instalar `framer-motion`. CSS transitions resolvem.
+
+### 9.8 Ícones
+
+`lucide-react` (já vem com shadcn). Tamanhos: 16, 20, 24, 32. Cor padrão `text-verde-escuro`. Stroke-width 1.75 para parecer leve e premium.
+
+### 9.9 Logo
+
+Arquivos já estão em `public/`:
+- `logo-verde.png` — versão completa com slogan "ALIMENTAÇÃO QUE ACOMPANHA O SEU RITMO" em verde vivo. Usar em fundos creme/branco.
+- `logo-laranja.png` — versão sem slogan, monocromática laranja. Usar em contextos quentes (CTAs grandes, finalizadores) — uso pontual.
+
+Componente `<Logo variant="verde" | "laranja" size="sm" | "md" | "lg" />` em `src/features/shared/components/Logo.tsx`. Default: `variant="verde" size="md"`. Tamanhos: sm = altura 28px, md = 40px, lg = 64px. Usar `<img alt="Vivere" />` com `decoding="async"` e `loading="eager"` no header.
+
+Header padrão das telas: logo verde tamanho md alinhado à esquerda. Hero usa logo verde tamanho lg centralizado.
+
+### 9.10 Diretrizes de NÃO fazer
+
+- Não usar gradientes coloridos como background (apenas sombras com tint).
+- Não usar emojis como ícones de UI (só no template do WhatsApp e em badges textuais opcionais).
+- Não usar cinza puro (`#CCCCCC`, `#999999`) — sempre `texto-suave` ou `borda` que tem tint quente.
+- Não usar mais de uma fonte serif diferente. Fraunces é a única.
+- Não animar entrada de itens em listas (cansa em mobile e atrasa percepção de preço).
+- Não esconder peso/preço em accordions na tela do cliente — sempre visível.
 
 ---
 
@@ -461,17 +569,25 @@ Ao iniciar, criar branch `refactor/configurador-vivere` a partir de `main` (ou d
 
 ### FASE 2 — Configurador completo (executar quando autorizado)
 
+**0. Design system primeiro** (antes de qualquer tela):
+   - Reescrever `src/index.css` com TODOS os tokens da Seção 9.1 (cores, sombras, easing) como CSS custom properties em `:root`. Apagar a paleta intermediária aplicada na Fase 1.
+   - Mapear via `@theme inline` do Tailwind v4 com aliases curtos: `bg-creme`, `text-verde-escuro`, `bg-laranja`, `border-borda`, `shadow-cta`, etc.
+   - `npm install @fontsource-variable/fraunces`. Importar Fraunces e confirmar Geist em `src/main.tsx`.
+   - Definir famílias no `@theme`: `font-display: 'Fraunces Variable'`, `font-sans: 'Geist Variable'`.
+   - Criar `src/features/shared/components/Logo.tsx` consumindo `public/logo-verde.png` e `public/logo-laranja.png` (variantes `verde` | `laranja`, tamanhos `sm` | `md` | `lg`).
+   - Atualizar `src/App.tsx` Hero placeholder usando o componente Logo, font-display nos headings, botão laranja conforme recipe da Seção 9.6. Validar visualmente em viewport 375px antes de seguir.
+
 1. Mover `catalog.seed.json` da raiz para `src/infrastructure/seed/`.
 2. Criar/ajustar tipos do domínio (Seção 5).
 3. Implementar `IngredientRepositoryLocal` (lê do seed, sobrescrevível por localStorage).
 4. Implementar engine de pricing pura + formatPrice99 + cálculo de pedido com frete/desconto.
 5. Implementar regras de composição puras (limites por categoria, min/max peso, exclusividade da Seleta de Legumes).
 6. Implementar `computeDietBadges`.
-7. Construir as 8 telas (Seção 4) reusando o que já existe em `meal-builder/`.
+7. Construir as 8 telas (Seção 4) reusando o que já existe em `meal-builder/`. Cada tela deve seguir os component recipes da Seção 9.6 — não inventar estilos paralelos.
 8. Construir handoff WhatsApp (Seção 4).
 9. Persistência de pedido no localStorage via `OrderRepositoryLocal`.
 10. Smoke test manual: simular pedido com 2 cardápios, checar mensagem do WhatsApp.
-11. Commit: `feat: phase 2 — configurador completo com multi-cardápio e handoff WhatsApp`.
+11. Commit: `feat: phase 2 — design system + configurador completo com multi-cardápio e handoff WhatsApp`.
 12. Resumir e PARAR.
 
 ### FASE 3 — Admin + testes + polish

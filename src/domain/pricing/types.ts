@@ -1,33 +1,51 @@
-import type { Money } from '../shared/Money'
-import type { ContainerSize } from '../meal/ContainerSize'
-import type { Meal } from '../meal/Meal'
+import type { Category } from '@/domain/catalog'
 
 export interface PricingConfig {
-  readonly basePrices: Record<ContainerSize, Money>
-  /** Future: per-tenant pricing overrides */
-  readonly tenantId?: string
+  packaging: number
+  delivery: number
+  other: number
+  monthlyRent: number
+  monthlyVolume: number
+  cooksPerShift: number
+  cookSalaryPerMonth: number
+  markupPercentage: number
 }
 
-export interface PricingContext {
-  readonly config: PricingConfig
+export interface CompositionRules {
+  minWeightPerMealG: number
+  maxWeightPerMealG: number
+  maxItemsByCategory: Record<Category, number>
+  minMealsPerCardapio: number
 }
 
-export interface PriceAdjustment {
-  readonly ruleName: string
-  readonly description: string
-  /** Positive = surcharge; negative = discount */
-  readonly amount: Money
+export interface CustomerPricingRules {
+  deliveryFeeBRL: number
+  freeDeliveryAtTotalUnits: number
+  discount5pctAtTotalUnits: number
+  discount10pctAtTotalUnits: number
 }
 
-export interface PricingResult {
-  readonly basePrice: Money
-  readonly adjustments: readonly PriceAdjustment[]
-  readonly total: Money
+export interface ItemCostBreakdown {
+  ingredientId: string
+  grams: number
+  cost: number
+  costPer100g: number
 }
 
-export interface PricingRule {
-  readonly name: string
-  calculate(meal: Meal, context: PricingContext): PriceAdjustment | null
+export interface MealPriceResult {
+  totalIngredientCost: number
+  fixedCostPerUnit: number
+  totalCost: number
+  suggestedPrice: number
+  finalPrice: number
+  items: ItemCostBreakdown[]
 }
 
-export const createPricingContext = (config: PricingConfig): PricingContext => ({ config })
+export interface OrderPricing {
+  subtotalMarmitas: number
+  totalUnits: number
+  frete: number
+  descontoPct: number
+  descontoBRL: number
+  totalPedido: number
+}
