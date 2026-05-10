@@ -6,9 +6,14 @@ import type { FulfillmentZone } from '@/domain/fulfillment'
 import type { PricingConfig, CustomerPricingRules, OrderPricing } from '@/domain/pricing'
 import { CATEGORY_LABEL } from '@/domain/catalog'
 import { calculateMealPrice, calculateOrderPricing, formatPrice99, formatBRL } from '@/domain/pricing'
-import { suggestContainer, computeDietBadges, DIET_FLAG_LABEL } from '@/domain/meal'
 
 const WA_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER ?? '555180889884'
+
+const PAYMENT_LABEL: Record<string, string> = {
+  pix: 'PIX',
+  cartao: 'Cartão (link de pagamento)',
+  dinheiro: 'Dinheiro',
+}
 
 function buildCardapioBlock(
   cardapio: Cardapio,
@@ -18,11 +23,6 @@ function buildCardapioBlock(
 ): string {
   const { finalPrice } = calculateMealPrice(cardapio.items, catalog, config)
   const totalGrams = cardapio.items.reduce((s, i) => s + i.grams, 0)
-  const container = suggestContainer(totalGrams)
-  const dietBadges = computeDietBadges(cardapio.items, catalog)
-  const restricoes = dietBadges.length > 0
-    ? dietBadges.map(f => DIET_FLAG_LABEL[f]).join(', ')
-    : '—'
 
   const lines: string[] = []
   lines.push(`🥗 Cardápio ${index + 1} — ${cardapio.quantity} unidades`)
@@ -34,8 +34,7 @@ function buildCardapioBlock(
     lines.push(`• ${CATEGORY_LABEL[ing.category]}: ${ing.name} - ${prep.name} - ${item.grams}g`)
   }
 
-  lines.push(`Peso/marmita: ${totalGrams}g  •  Recipiente: ${container}`)
-  lines.push(`Restrições: ${restricoes}`)
+  lines.push(`Peso/marmita: ${totalGrams}g`)
   lines.push(`Preço unitário: ${formatPrice99(finalPrice)}`)
 
   return lines.join('\n')
@@ -55,6 +54,7 @@ export function buildWhatsAppMessage(
   config: PricingConfig,
   customerRules: CustomerPricingRules,
   zone: FulfillmentZone | null = null,
+  paymentMethod?: 'pix' | 'cartao' | 'dinheiro',
 ): WhatsAppPayload {
   const pricing: OrderPricing = calculateOrderPricing(cardapios, catalog, config, customerRules, fulfillment)
 
@@ -98,6 +98,9 @@ export function buildWhatsAppMessage(
   }
 
   lines.push(`📝 Observações: ${notes || '—'}`)
+  if (paymentMethod) {
+    lines.push(`💳 Forma de pagamento: ${PAYMENT_LABEL[paymentMethod] ?? paymentMethod}`)
+  }
   lines.push('')
   lines.push('Aguardo confirmação do prazo e fechamento. Obrigado!')
 

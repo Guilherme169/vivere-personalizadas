@@ -12,4 +12,5 @@ export interface Order {
   fulfillment: Fulfillment
   citySlug?: string
   notes?: string
+  paymentMethod?: 'pix' | 'cartao' | 'dinheiro'
 }

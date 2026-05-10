@@ -1,4 +1,5 @@
 import { AppHeader } from '@/features/shared/components/AppHeader'
+import { CategoryIcon } from '@/features/shared/components/CategoryIcon'
 import { useWizardStore } from '../store/wizardStore'
 import { CompositionDrawer } from './CompositionDrawer'
 
@@ -26,7 +27,9 @@ export function PreparationStep() {
             onClick={() => selectPreparation(prep.id)}
             className="bg-surface rounded-3xl p-6 shadow-md border border-borda flex flex-col items-center gap-2 active:scale-[0.98] transition-transform text-center"
           >
-            <span className="text-4xl">🍳</span>
+            <div className="h-12 w-12 rounded-2xl bg-verde-vivo/10 flex items-center justify-center text-verde-escuro">
+              <CategoryIcon category={ingredient.category} size={24} />
+            </div>
             <span className="font-medium text-[17px] text-verde-escuro">{prep.name}</span>
           </button>
         ))}

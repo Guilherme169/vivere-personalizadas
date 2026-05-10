@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { ChevronUp, ChevronDown, Trash2, Pencil } from 'lucide-react'
 import { useWizardStore } from '../store/wizardStore'
-import { calculateMealPrice, formatPrice99 } from '@/domain/pricing'
-import { totalWeight, suggestContainer, computeDietBadges, DIET_FLAG_LABEL, CONTAINER_LABEL } from '@/domain/meal'
+import { calculateMealPrice, formatPrice99, formatBRL } from '@/domain/pricing'
+import { totalWeight, computeDietBadges, DIET_FLAG_LABEL } from '@/domain/meal'
 import { CATEGORY_LABEL } from '@/domain/catalog'
 
 export function CompositionDrawer() {
@@ -12,26 +12,29 @@ export function CompositionDrawer() {
   if (draftItems.length === 0) return null
 
   const weight = totalWeight(draftItems)
-  const container = suggestContainer(weight)
   const { finalPrice } = calculateMealPrice(draftItems, catalog, pricingConfig)
   const badges = computeDietBadges(draftItems, catalog)
+  const weightOk = weight >= 200
 
   return (
     <div className="fixed bottom-0 inset-x-0 z-30 bg-surface border-t border-borda shadow-lg transition-all">
-      {/* Drag handle + summary row */}
+      {/* Collapsed summary row */}
       <button
         onClick={() => setExpanded(e => !e)}
         className="w-full flex items-center justify-between px-5 py-3"
       >
-        <div className="flex items-center gap-3 text-sm">
-          <span className="font-medium text-verde-escuro">{weight}g</span>
-          <span className="text-borda">·</span>
-          <span className="text-texto-suave">{CONTAINER_LABEL[container]}</span>
-          <span className="text-borda">·</span>
-          <span className="font-semibold text-laranja font-display">{formatPrice99(finalPrice)}</span>
+        <div className="flex items-baseline gap-2">
+          <span className={`font-display font-semibold text-[20px] ${weightOk ? 'text-verde-vivo' : 'text-verde-escuro'}`}>
+            {weight}g
+          </span>
+          <span className="text-borda text-sm">·</span>
+          <span className="font-display font-semibold text-[20px] text-laranja">{formatPrice99(finalPrice)}</span>
+          {!weightOk && (
+            <span className="text-[10px] text-aviso ml-1">mín. 200g</span>
+          )}
         </div>
         <div className="flex items-center gap-2 text-texto-suave">
-          <span className="text-xs">{expanded ? 'Fechar' : 'Ver composição'}</span>
+          <span className="text-xs font-medium">{expanded ? 'Fechar' : 'Ver e finalizar marmita'}</span>
           {expanded ? <ChevronDown size={16} strokeWidth={1.75} /> : <ChevronUp size={16} strokeWidth={1.75} />}
         </div>
       </button>
@@ -79,6 +82,11 @@ export function CompositionDrawer() {
               ))}
             </div>
           )}
+
+          {/* Subtotal */}
+          <p className="text-xs text-texto-suave mb-3">
+            {weight}g · {formatPrice99(finalPrice)} / un · total estimado {formatBRL(finalPrice)}
+          </p>
 
           {/* Actions */}
           <div className="flex flex-col gap-2" style={{ paddingBottom: 'max(0px, env(safe-area-inset-bottom))' }}>

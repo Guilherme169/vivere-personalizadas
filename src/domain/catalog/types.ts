@@ -16,6 +16,7 @@ export interface Ingredient {
   baseYield: number
   preparations: Preparation[]
   dietFlags: DietFlag[]
+  active?: boolean
 }
 
 export const CATEGORY_LABEL: Record<Category, string> = {

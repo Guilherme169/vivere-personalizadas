@@ -80,22 +80,27 @@ export function QuantityStep() {
             Outro (digitar quantidade)
           </button>
         ) : (
-          <div className="flex gap-2">
-            <input
-              type="number"
-              min={min}
-              step={1}
-              placeholder={`Mín. ${min}`}
-              value={custom}
-              onChange={e => setCustom(e.target.value)}
-              className="flex-1 h-12 rounded-2xl bg-surface border border-borda px-4 text-[15px] placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-verde-escuro/30"
-            />
-            <button
-              onClick={handleCustomSubmit}
-              className="h-12 px-5 rounded-2xl bg-laranja text-white font-medium shadow-cta hover:bg-laranja-hover active:scale-[0.98] transition-all"
-            >
-              Ok
-            </button>
+          <div>
+            <label className="text-xs font-medium text-texto-suave uppercase tracking-wide block mb-1.5">
+              Quantidade personalizada (mín. {min})
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={min}
+                step={1}
+                placeholder={`${min}`}
+                value={custom}
+                onChange={e => setCustom(e.target.value)}
+                className="flex-1 h-12 rounded-2xl bg-surface border border-borda px-4 text-[15px] placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-verde-escuro/30"
+              />
+              <button
+                onClick={handleCustomSubmit}
+                className="h-12 px-5 rounded-2xl bg-laranja text-white font-medium shadow-cta hover:bg-laranja-hover active:scale-[0.98] transition-all"
+              >
+                Ok
+              </button>
+            </div>
           </div>
         )}
       </div>

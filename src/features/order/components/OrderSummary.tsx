@@ -5,7 +5,7 @@ import { useWizardStore } from '@/features/meal-builder/store/wizardStore'
 import { buildWhatsAppMessage } from '@/application/useCases/order/buildWhatsAppMessage'
 import { services } from '@/infrastructure/ServiceFactory'
 import { calculateMealPrice, calculateOrderPricing, formatPrice99, formatBRL } from '@/domain/pricing'
-import { totalWeight, suggestContainer, CONTAINER_LABEL, computeDietBadges, DIET_FLAG_LABEL } from '@/domain/meal'
+import { totalWeight } from '@/domain/meal'
 import { CATEGORY_LABEL } from '@/domain/catalog'
 
 function maskPhone(value: string): string {
@@ -20,7 +20,7 @@ export function OrderSummary() {
   const {
     navigate, cardapios, catalog, pricingConfig, customerPricingRules,
     customer, fulfillment, selectedCitySlug, fulfillmentZones,
-    notes, updateCustomer, setFulfillment, setSelectedCity, setNotes,
+    notes, paymentMethod, updateCustomer, setFulfillment, setSelectedCity, setNotes, setPaymentMethod,
   } = useWizardStore()
 
   const selectedZone = fulfillmentZones.find(z => z.citySlug === selectedCitySlug) ?? fulfillmentZones[0] ?? null
@@ -42,13 +42,15 @@ export function OrderSummary() {
 
   const canSubmit =
     (customer?.name?.trim().length ?? 0) > 0 &&
-    (customer?.phone?.replace(/\D/g, '').length ?? 0) >= 10
+    (customer?.phone?.replace(/\D/g, '').length ?? 0) >= 10 &&
+    paymentMethod !== null
 
   function handleSubmit() {
     const orderCustomer = customer ?? { name: '', phone: '' }
     const payload = buildWhatsAppMessage(
       cardapios, orderCustomer, fulfillment, notes, catalog, pricingConfig, effectiveRules,
       fulfillment === 'entrega' ? selectedZone : null,
+      paymentMethod ?? undefined,
     )
 
     const order = {
@@ -59,6 +61,7 @@ export function OrderSummary() {
       fulfillment,
       citySlug: fulfillment === 'entrega' ? (selectedZone?.citySlug ?? undefined) : undefined,
       notes: notes || undefined,
+      paymentMethod: paymentMethod ?? undefined,
     }
     services.orderRepo.persist(order).catch(err => {
       console.error('Failed to persist order:', err)
@@ -84,15 +87,13 @@ export function OrderSummary() {
         {cardapios.map((c, i) => {
           const { finalPrice } = calculateMealPrice(c.items, catalog, pricingConfig)
           const weight = totalWeight(c.items)
-          const container = suggestContainer(weight)
-          const badges = computeDietBadges(c.items, catalog)
 
           return (
             <div key={c.id} className="bg-surface rounded-3xl p-5 shadow-md border border-borda">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <p className="font-medium text-verde-escuro">Cardápio {i + 1}</p>
-                  <p className="text-xs text-texto-suave">{weight}g · {CONTAINER_LABEL[container]}</p>
+                  <p className="text-xs text-texto-suave">{weight}g</p>
                 </div>
                 <div className="text-right">
                   <p className="font-display font-semibold text-[20px] text-verde-escuro">{formatPrice99(finalPrice)}</p>
@@ -100,11 +101,15 @@ export function OrderSummary() {
                 </div>
               </div>
 
-              <ul className="space-y-1 mb-3">
+              <ul className="space-y-1">
                 {c.items.map(item => {
                   const ing = catalog.find(x => x.id === item.ingredientId)
                   const prep = ing?.preparations.find(p => p.id === item.preparationId)
-                  if (!ing || !prep) return null
+                  if (!ing || !prep) return (
+                    <li key={item.ingredientId} className="text-sm text-texto-suave/60 italic">
+                      [Ingrediente removido]
+                    </li>
+                  )
                   return (
                     <li key={item.ingredientId} className="text-sm text-texto-suave flex justify-between">
                       <span>{CATEGORY_LABEL[ing.category]}: {ing.name} — {prep.name}</span>
@@ -113,16 +118,6 @@ export function OrderSummary() {
                   )
                 })}
               </ul>
-
-              {badges.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {badges.map(f => (
-                    <span key={f} className="inline-flex items-center gap-0.5 h-6 px-2 rounded-full bg-verde-vivo/12 text-verde-escuro text-[10px] font-medium">
-                      ✓ {DIET_FLAG_LABEL[f]}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
           )
         })}
@@ -164,7 +159,7 @@ export function OrderSummary() {
           {accordionOpen && (
             <p className="text-xs text-texto-suave mt-2 leading-relaxed">
               O preço de cada marmita é calculado com base no custo dos ingredientes (peso real após preparo), mais os custos fixos de embalagem, entrega e operação, com margem de lucro aplicada.
-              O valor termina sempre em ,99 — formatação padrão. Frete grátis a partir de 6 unidades. Descontos de 5% (≥11 un.) ou 10% (≥16 un.) aplicados sobre o subtotal.
+              Frete grátis a partir de 6 unidades. Descontos de 5% (≥11 un.) ou 10% (≥16 un.) aplicados sobre o subtotal.
             </p>
           )}
         </div>
@@ -252,6 +247,15 @@ export function OrderSummary() {
             </>
           )}
 
+          {fulfillment === 'retirada' && (
+            <div className="rounded-2xl bg-creme border border-borda px-4 py-3 space-y-0.5">
+              <p className="text-sm font-medium text-verde-escuro">📍 Retirada na Vivere</p>
+              <p className="text-xs text-texto-suave">R. Sezefredo da Costa Tôrres, 373 · Centro</p>
+              <p className="text-xs text-texto-suave">Santo Antônio da Patrulha · RS · CEP 95500-000</p>
+              <p className="text-xs text-texto-suave mt-2">Combinaremos o melhor horário no WhatsApp.</p>
+            </div>
+          )}
+
           <div>
             <label className="text-xs font-medium text-texto-suave uppercase tracking-wide block mb-1.5">Observações (opcional)</label>
             <textarea
@@ -261,6 +265,33 @@ export function OrderSummary() {
               rows={3}
               className="w-full rounded-2xl bg-creme border border-borda px-4 py-3 text-[15px] placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-verde-escuro/30 resize-none"
             />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-texto-suave uppercase tracking-wide block mb-1.5">
+              Forma de pagamento <span className="text-erro">*</span>
+            </label>
+            <div className="flex flex-col gap-2">
+              {([
+                { value: 'pix', label: 'PIX' },
+                { value: 'cartao', label: 'Cartão (link de pagamento)' },
+                { value: 'dinheiro', label: 'Dinheiro' },
+              ] as const).map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setPaymentMethod(opt.value)}
+                  className={[
+                    'w-full h-12 rounded-xl text-sm font-medium text-left px-4 transition-all',
+                    paymentMethod === opt.value
+                      ? 'bg-verde-escuro text-white'
+                      : 'border border-borda text-verde-escuro hover:bg-verde-escuro/5',
+                  ].join(' ')}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -279,11 +310,13 @@ export function OrderSummary() {
               : 'bg-laranja/40 text-white cursor-not-allowed',
           ].join(' ')}
         >
-          💬 Continuar no WhatsApp
+          Enviar pedido pelo WhatsApp
         </button>
-        {!canSubmit && (
-          <p className="text-center text-xs text-texto-suave">Preencha nome e telefone para continuar</p>
-        )}
+        <p className="text-center text-xs text-texto-suave">
+          {canSubmit
+            ? 'Você vai conversar com nosso atendente para confirmar e fechar o pedido.'
+            : 'Preencha nome, telefone e forma de pagamento para continuar'}
+        </p>
       </div>
     </div>
   )

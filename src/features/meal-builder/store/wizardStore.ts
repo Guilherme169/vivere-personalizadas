@@ -40,6 +40,7 @@ interface WizardState {
   selectedCitySlug: string | null
   fulfillmentZones: FulfillmentZone[]
   notes: string
+  paymentMethod: 'pix' | 'cartao' | 'dinheiro' | null
 
   navigate: (step: WizardStep, direction?: 'forward' | 'back') => void
   loadCatalog: () => Promise<void>
@@ -57,6 +58,7 @@ interface WizardState {
   setFulfillment: (f: Fulfillment) => void
   setSelectedCity: (slug: string) => void
   setNotes: (n: string) => void
+  setPaymentMethod: (m: 'pix' | 'cartao' | 'dinheiro') => void
   startNewCardapio: () => void
 }
 
@@ -91,6 +93,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   selectedCitySlug: null,
   fulfillmentZones: [],
   notes: '',
+  paymentMethod: null,
 
   navigate: (step, direction = 'forward') => set({ step, direction }),
 
@@ -190,4 +193,5 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setFulfillment: (f) => set({ fulfillment: f }),
   setSelectedCity: (slug) => set({ selectedCitySlug: slug }),
   setNotes: (n) => set({ notes: n }),
+  setPaymentMethod: (m) => set({ paymentMethod: m }),
 }))

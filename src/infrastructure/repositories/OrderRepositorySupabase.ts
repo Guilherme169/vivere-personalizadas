@@ -36,6 +36,7 @@ export const OrderRepositorySupabase: OrderRepository = {
       notes: order.notes ?? null,
       total_units: totalUnits,
       total_brl: 0,
+      payment_method: order.paymentMethod ?? null,
       status: 'novo',
       whatsapp_sent_at: new Date().toISOString(),
     })

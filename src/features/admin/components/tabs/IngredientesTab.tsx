@@ -134,6 +134,7 @@ export function IngredientesTab() {
       </div>
 
       <IngredienteDialog
+        key={editing?.id ?? 'new'}
         open={dialogOpen}
         initial={editing}
         onSave={handleSave}

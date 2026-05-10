@@ -6,12 +6,15 @@ import { isCategoryFull, categorySelectedCount } from '@/domain/meal'
 import { CATEGORY_LABEL } from '@/domain/catalog'
 import type { Category } from '@/domain/catalog'
 
-const CATEGORIES: Category[] = ['protein', 'carb', 'vegetable', 'seasoning', 'dairy', 'other']
+const ALL_CATEGORIES: Category[] = ['protein', 'carb', 'vegetable', 'seasoning', 'dairy', 'other']
 
 export function CategoryStep() {
   const { navigate, selectCategory, draftItems, catalog, compositionRules, cardapios } = useWizardStore()
 
   const cardapioNumber = cardapios.length + 1
+  const activeCategories = ALL_CATEGORIES.filter(cat =>
+    catalog.some(ing => ing.category === cat && ing.active !== false)
+  )
 
   return (
     <div className="min-h-dvh bg-creme flex flex-col">
@@ -30,7 +33,7 @@ export function CategoryStep() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 px-5 pb-40">
-        {CATEGORIES.map(cat => {
+        {activeCategories.map(cat => {
           const full = isCategoryFull(draftItems, cat, catalog, compositionRules)
           const count = categorySelectedCount(draftItems, cat, catalog)
           const max = compositionRules.maxItemsByCategory[cat]
