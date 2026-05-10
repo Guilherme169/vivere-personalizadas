@@ -23,4 +23,9 @@ export const OrderRepositoryLocal: OrderRepository = {
   async clear(): Promise<void> {
     localStorage.removeItem(LS_KEY)
   },
+
+  async findLastByCustomerPhone(phone: string): Promise<Order | null> {
+    const orders = await this.list()
+    return orders.findLast(o => o.customer.phone === phone) ?? null
+  },
 }

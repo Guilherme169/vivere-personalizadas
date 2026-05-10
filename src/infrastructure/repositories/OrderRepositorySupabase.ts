@@ -62,4 +62,21 @@ export const OrderRepositorySupabase: OrderRepository = {
   async clear(): Promise<void> {
     // No-op: orders in Supabase are managed via the dashboard.
   },
+
+  async findLastByCustomerPhone(phone: string): Promise<Order | null> {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, created_at, payload')
+      .eq('customer_phone', phone)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw error
+    if (!data) return null
+    return {
+      ...(data.payload as Order),
+      id: data.id as string,
+      createdAt: data.created_at as string,
+    }
+  },
 }

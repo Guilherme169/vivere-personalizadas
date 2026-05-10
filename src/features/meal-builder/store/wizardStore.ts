@@ -2,13 +2,14 @@ import { create } from 'zustand'
 import type { Ingredient, Category } from '@/domain/catalog'
 import type { CompositionItem, Cardapio } from '@/domain/cardapio'
 import type { Customer } from '@/domain/customer'
-import type { Fulfillment } from '@/domain/order'
+import type { Fulfillment, Order } from '@/domain/order'
 import type { FulfillmentZone } from '@/domain/fulfillment'
 import type { PricingConfig, CompositionRules, CustomerPricingRules } from '@/domain/pricing'
 import { services } from '@/infrastructure/ServiceFactory'
 
 export type WizardStep =
   | 'lead-capture'
+  | 'welcome'
   | 'hero'
   | 'category'
   | 'ingredient'
@@ -36,6 +37,7 @@ interface WizardState {
   cardapios: Cardapio[]
 
   customer: Customer | null
+  lastOrder: Order | null
   fulfillment: Fulfillment
   selectedCitySlug: string | null
   fulfillmentZones: FulfillmentZone[]
@@ -46,11 +48,13 @@ interface WizardState {
   loadCatalog: () => Promise<void>
   loadFulfillmentZones: () => Promise<void>
   setCustomer: (customer: Customer) => void
+  setLastOrder: (order: Order | null) => void
   updateCustomer: (data: Partial<Customer>) => void
   selectCategory: (cat: Category) => void
   selectIngredient: (id: string) => void
   selectPreparation: (id: string) => void
   addItemToDraft: (grams: number) => void
+  addDirectItem: (item: CompositionItem) => void
   removeFromDraft: (ingredientId: string) => void
   editDraftItem: (ingredientId: string) => void
   finalizeCardapio: (quantity: number) => void
@@ -89,6 +93,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   cardapios: [],
 
   customer: null,
+  lastOrder: null,
   fulfillment: 'entrega',
   selectedCitySlug: null,
   fulfillmentZones: [],
@@ -120,6 +125,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   },
 
   setCustomer: (customer) => set({ customer }),
+  setLastOrder: (order) => set({ lastOrder: order }),
 
   updateCustomer: (data) => set(s => ({
     customer: s.customer
@@ -154,6 +160,14 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       direction: 'back',
       step: 'category',
     })
+  },
+
+  addDirectItem: (item) => {
+    set(s => ({
+      draftItems: [...s.draftItems, item],
+      direction: 'back',
+      step: 'category',
+    }))
   },
 
   removeFromDraft: (ingredientId) =>

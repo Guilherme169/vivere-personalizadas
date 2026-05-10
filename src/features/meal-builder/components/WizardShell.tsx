@@ -1,5 +1,6 @@
 import { useWizardStore } from '../store/wizardStore'
 import { LeadCaptureStep } from './LeadCaptureStep'
+import { WelcomeBackStep } from './WelcomeBackStep'
 import { HeroScreen } from './HeroScreen'
 import { CategoryStep } from './CategoryStep'
 import { IngredientStep } from './IngredientStep'
@@ -18,6 +19,7 @@ export function WizardShell() {
   function renderStep() {
     switch (step) {
       case 'lead-capture': return <LeadCaptureStep />
+      case 'welcome':      return <WelcomeBackStep />
       case 'hero':         return <HeroScreen />
       case 'category':     return <CategoryStep />
       case 'ingredient':   return <IngredientStep />

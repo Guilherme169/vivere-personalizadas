@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import { Pencil } from 'lucide-react'
 import { AppHeader } from '@/features/shared/components/AppHeader'
 import { useWizardStore } from '../store/wizardStore'
 import { CompositionDrawer } from './CompositionDrawer'
 import { canAddItem } from '@/domain/meal'
 import { calculateItemCost, formatPrice99 } from '@/domain/pricing'
 
-const QUICK_GRAMS = [100, 150, 200, 300]
+const QUICK_GRAMS = [100, 120, 150, 180]
 
 export function GramaturaStep() {
   const [custom, setCustom] = useState('')
@@ -69,9 +70,10 @@ export function GramaturaStep() {
         {!showCustom ? (
           <button
             onClick={() => setShowCustom(true)}
-            className="w-full h-11 rounded-xl border border-borda bg-transparent text-verde-escuro text-sm font-medium hover:bg-verde-escuro/5 active:scale-[0.98] transition-all"
+            className="w-full h-12 rounded-2xl border-2 border-dashed border-verde-escuro/40 bg-transparent text-verde-escuro text-sm font-medium flex items-center justify-center gap-2 hover:bg-verde-escuro/5 active:scale-[0.98] transition-all"
           >
-            Outro (digitar gramatura)
+            <Pencil size={14} strokeWidth={1.75} />
+            + Outra gramatura
           </button>
         ) : (
           <div className="flex gap-2">

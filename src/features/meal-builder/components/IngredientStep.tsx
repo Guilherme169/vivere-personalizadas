@@ -5,21 +5,33 @@ import { CategoryIcon } from '@/features/shared/components/CategoryIcon'
 import { useWizardStore } from '../store/wizardStore'
 import { CompositionDrawer } from './CompositionDrawer'
 import { canAddItem } from '@/domain/meal'
-import { DIET_FLAG_LABEL } from '@/domain/meal'
 import { calculateItemCost, formatPrice99 } from '@/domain/pricing'
-import type { DietFlag } from '@/domain/catalog'
+import type { Ingredient } from '@/domain/catalog'
 
 export function IngredientStep() {
   const [query, setQuery] = useState('')
   const {
     navigate, selectedCategory, catalog, draftItems,
-    compositionRules, selectIngredient,
+    compositionRules, selectIngredient, addDirectItem,
   } = useWizardStore()
 
-  const ingredients = catalog.filter(i => i.category === selectedCategory)
+  const isSeasoning = selectedCategory === 'seasoning'
+  const ingredients = catalog.filter(i => i.category === selectedCategory && i.active !== false)
   const filtered = query.trim()
     ? ingredients.filter(i => i.name.toLowerCase().includes(query.toLowerCase()))
     : ingredients
+
+  function handleSelect(ing: Ingredient) {
+    if (isSeasoning) {
+      addDirectItem({
+        ingredientId: ing.id,
+        preparationId: ing.preparations[0]!.id,
+        grams: 0,
+      })
+      return
+    }
+    selectIngredient(ing.id)
+  }
 
   return (
     <div className="min-h-dvh bg-creme flex flex-col">
@@ -47,7 +59,7 @@ export function IngredientStep() {
       <ul className="flex-1 overflow-y-auto no-scrollbar px-5 pb-40 space-y-2">
         {filtered.map(ing => {
           const defaultPrep = ing.preparations[0]!
-          const check = canAddItem(draftItems, ing.id, 150, catalog, compositionRules)
+          const check = canAddItem(draftItems, ing.id, isSeasoning ? 0 : 150, catalog, compositionRules)
           const costPer100g = defaultPrep
             ? calculateItemCost(ing, defaultPrep, 100).cost
             : 0
@@ -56,33 +68,25 @@ export function IngredientStep() {
             <li key={ing.id}>
               <button
                 disabled={!check.allowed}
-                onClick={() => selectIngredient(ing.id)}
+                onClick={() => handleSelect(ing)}
                 className={[
                   'w-full bg-surface rounded-3xl p-4 shadow-sm border border-borda flex items-center gap-3 text-left',
                   'active:scale-[0.99] transition-transform',
                   !check.allowed ? 'opacity-40 cursor-not-allowed' : '',
                 ].join(' ')}
               >
-                {/* Placeholder icon — usa o ícone da categoria do ingrediente */}
                 <div className="h-12 w-12 rounded-2xl bg-verde-vivo/10 flex items-center justify-center shrink-0 text-verde-escuro">
                   <CategoryIcon category={ing.category} size={22} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-[15px] text-verde-escuro truncate">{ing.name}</p>
-                  <p className="text-xs text-texto-suave mt-0.5">
-                    {formatPrice99(costPer100g)} / 100g
-                  </p>
+                  {!isSeasoning && (
+                    <p className="text-xs text-texto-suave mt-0.5">
+                      {formatPrice99(costPer100g)} / 100g
+                    </p>
+                  )}
                   {!check.allowed && check.reason && (
                     <p className="text-xs text-aviso mt-0.5">{check.reason}</p>
-                  )}
-                  {ing.dietFlags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {(ing.dietFlags as DietFlag[]).map(f => (
-                        <span key={f} className="inline-flex items-center gap-0.5 h-5 px-2 rounded-full bg-verde-vivo/12 text-verde-escuro text-[10px] font-medium">
-                          {DIET_FLAG_LABEL[f]}
-                        </span>
-                      ))}
-                    </div>
                   )}
                 </div>
               </button>

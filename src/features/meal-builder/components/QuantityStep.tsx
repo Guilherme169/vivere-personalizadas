@@ -1,21 +1,31 @@
 import { useState } from 'react'
+import { Pencil } from 'lucide-react'
 import { AppHeader } from '@/features/shared/components/AppHeader'
 import { useWizardStore } from '../store/wizardStore'
-import { calculateMealPrice, formatPrice99, formatBRL } from '@/domain/pricing'
+import { calculateMealPrice, calculateOrderPricing, formatPrice99, formatBRL } from '@/domain/pricing'
 import { totalWeight, suggestContainer, CONTAINER_LABEL } from '@/domain/meal'
+import type { Cardapio } from '@/domain/cardapio'
 
 const QUICK_QTY = [5, 10, 15, 20]
 
 export function QuantityStep() {
   const [custom, setCustom] = useState('')
   const [showCustom, setShowCustom] = useState(false)
-  const { navigate, draftItems, catalog, pricingConfig, compositionRules, finalizeCardapio, cardapios } = useWizardStore()
+  const {
+    navigate, draftItems, catalog, pricingConfig, compositionRules,
+    customerPricingRules, fulfillment, finalizeCardapio, cardapios,
+  } = useWizardStore()
   const { finalPrice } = calculateMealPrice(draftItems, catalog, pricingConfig)
   const weight = totalWeight(draftItems)
   const container = suggestContainer(weight)
   const min = compositionRules.minMealsPerCardapio
 
   const weightWarning = weight < compositionRules.minWeightPerMealG
+
+  function getQtyPricing(qty: number) {
+    const preview: Cardapio[] = [{ id: 'preview', items: draftItems, quantity: qty }]
+    return calculateOrderPricing(preview, catalog, pricingConfig, customerPricingRules, fulfillment)
+  }
 
   function handleSelect(qty: number) {
     if (qty < min) return
@@ -58,26 +68,59 @@ export function QuantityStep() {
         </p>
       </div>
 
-      <div className="px-5 pb-36 space-y-4">
+      <div className="px-5 pb-36 space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          {QUICK_QTY.map(q => (
-            <button
-              key={q}
-              onClick={() => handleSelect(q)}
-              className="h-20 rounded-3xl border border-borda bg-surface shadow-sm flex flex-col items-center justify-center gap-1 active:scale-[0.98] transition-transform hover:border-verde-escuro"
-            >
-              <span className="font-display font-semibold text-[28px] text-verde-escuro">{q}</span>
-              <span className="text-xs text-texto-suave">{formatBRL(finalPrice * q)}</span>
-            </button>
-          ))}
+          {QUICK_QTY.map(q => {
+            const p = getQtyPricing(q)
+            const hasDiscount = p.descontoPct > 0
+            const subtotalSemDesconto = finalPrice * q
+            const freteGratis = p.frete === 0
+
+            return (
+              <button
+                key={q}
+                onClick={() => handleSelect(q)}
+                className="rounded-3xl border border-borda bg-surface shadow-sm flex flex-col items-start justify-center gap-0.5 px-4 py-4 active:scale-[0.98] transition-transform hover:border-verde-escuro text-left"
+              >
+                <span className="font-display font-semibold text-[22px] text-verde-escuro">{q}</span>
+                <span className="text-xs text-texto-suave">{q} unidades</span>
+
+                {hasDiscount ? (
+                  <>
+                    <span className="text-sm font-semibold text-verde-vivo mt-1">
+                      {formatBRL(p.totalPedido)} ({(p.descontoPct * 100).toFixed(0)}% off)
+                    </span>
+                    <span className="text-xs text-texto-suave line-through">
+                      {formatBRL(subtotalSemDesconto)}
+                    </span>
+                    <span className="text-xs text-verde-escuro">
+                      Você economiza {formatBRL(subtotalSemDesconto - p.totalPedido + p.frete)}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm font-semibold text-verde-escuro mt-1">
+                      {formatBRL(p.totalPedido)}
+                    </span>
+                    {freteGratis ? (
+                      <span className="text-xs text-verde-vivo">🚚 Frete grátis</span>
+                    ) : (
+                      <span className="text-xs text-texto-suave">Frete: {formatBRL(p.frete)}</span>
+                    )}
+                  </>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         {!showCustom ? (
           <button
             onClick={() => setShowCustom(true)}
-            className="w-full h-11 rounded-xl border border-borda bg-transparent text-verde-escuro text-sm font-medium hover:bg-verde-escuro/5 active:scale-[0.98] transition-all"
+            className="w-full h-12 rounded-2xl border-2 border-dashed border-verde-escuro/40 bg-transparent text-verde-escuro text-sm font-medium flex items-center justify-center gap-2 hover:bg-verde-escuro/5 active:scale-[0.98] transition-all"
           >
-            Outro (digitar quantidade)
+            <Pencil size={14} strokeWidth={1.75} />
+            + Outra quantidade
           </button>
         ) : (
           <div>

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Logo } from '@/features/shared/components/Logo'
 import { AppFooter } from '@/features/shared/components/AppFooter'
 import { useWizardStore } from '../store/wizardStore'
@@ -14,14 +13,13 @@ function maskPhone(value: string): string {
 }
 
 export function LeadCaptureStep() {
-  const { navigate, setCustomer, loadCatalog, loadFulfillmentZones } = useWizardStore()
+  const { navigate, setCustomer, setLastOrder, loadCatalog, loadFulfillmentZones } = useWizardStore()
   const nameRef = useRef<HTMLInputElement>(null)
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [consent, setConsent] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [greeting, setGreeting] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -39,28 +37,26 @@ export function LeadCaptureStep() {
     setError(null)
     try {
       const normalized = normalizePhone(phone)
-      const existing = await services.customerRepo.findByPhone(normalized)
 
-      if (existing) {
-        setGreeting(`Olá de novo, ${existing.name}!`)
-        await new Promise(r => setTimeout(r, 1000))
-        const updated = await services.customerRepo.upsertByPhone({
-          name,
-          phone: normalized,
-        })
-        setCustomer(updated)
+      const upserted = await services.customerRepo.upsertByPhone({
+        name,
+        phone: normalized,
+        consentLgpdAt: new Date().toISOString(),
+        source: 'web',
+      })
+      setCustomer(upserted)
+
+      const lastOrder = await services.orderRepo.findLastByCustomerPhone(normalized)
+      setLastOrder(lastOrder)
+
+      localStorage.setItem('vivere:last_customer_phone', normalized)
+      localStorage.setItem('vivere:last_customer_name', name.trim())
+
+      if (lastOrder) {
+        navigate('welcome', 'forward')
       } else {
-        const created = await services.customerRepo.upsertByPhone({
-          name,
-          phone: normalized,
-          consentLgpdAt: new Date().toISOString(),
-          source: 'web',
-        })
-        setCustomer(created)
+        navigate('hero', 'forward')
       }
-
-      localStorage.setItem('vivere:customer_id', (existing?.id ?? '') as string)
-      navigate('hero', 'forward')
     } catch (err) {
       console.error('Lead capture error:', err)
       setError('Erro ao salvar seus dados. Tente novamente.')
@@ -122,17 +118,16 @@ export function LeadCaptureStep() {
             />
             <span className="text-sm text-texto-suave leading-snug">
               Li e concordo com a{' '}
-              <Link to="/privacidade" target="_blank" className="text-verde-escuro underline underline-offset-2">
+              <a
+                href="/privacidade"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-verde-escuro underline underline-offset-2"
+              >
                 Política de Privacidade
-              </Link>
+              </a>
             </span>
           </label>
-
-          {greeting && (
-            <div className="rounded-2xl bg-verde-vivo/10 border border-verde-vivo/30 px-4 py-3 text-sm font-medium text-verde-escuro text-center">
-              {greeting}
-            </div>
-          )}
 
           {error && (
             <p className="text-sm text-red-500 text-center">{error}</p>
