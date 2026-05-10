@@ -1,41 +1,37 @@
 import type { Order } from '@/domain/order'
 import type { OrderRepository } from '@/application/ports'
+import { normalizePhone } from '@/domain/customer'
 import { supabase } from '../supabase/client'
-
-function normalizePhone(raw: string): string {
-  const digits = raw.replace(/\D/g, '')
-  return digits.startsWith('55') ? digits : `55${digits}`
-}
 
 export const OrderRepositorySupabase: OrderRepository = {
   async persist(order: Order): Promise<void> {
     const phone = normalizePhone(order.customer.phone)
 
-    // Upsert customer by phone
-    const { data: customerData, error: customerError } = await supabase
-      .from('customers')
-      .upsert(
-        {
-          phone,
-          name: order.customer.name,
-          last_address: order.customer.address ?? null,
-        },
-        { onConflict: 'phone' }
-      )
-      .select('id')
-      .single()
-
-    if (customerError) throw customerError
+    // Use customer.id from lead-capture if available; otherwise upsert for safety
+    let customerId = order.customer.id
+    if (!customerId) {
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .upsert(
+          { phone, name: order.customer.name, last_address: order.customer.address ?? null },
+          { onConflict: 'phone' }
+        )
+        .select('id')
+        .single()
+      if (customerError) throw customerError
+      customerId = customerData.id as string
+    }
 
     const totalUnits = order.cardapios.reduce((sum, c) => sum + c.quantity, 0)
 
     const { error: orderError } = await supabase.from('orders').insert({
       id: order.id,
-      customer_id: customerData.id,
+      customer_id: customerId,
       customer_name: order.customer.name,
       customer_phone: phone,
       customer_address: order.customer.address ?? null,
       fulfillment: order.fulfillment,
+      city_slug: order.citySlug ?? null,
       payload: order,
       notes: order.notes ?? null,
       total_units: totalUnits,

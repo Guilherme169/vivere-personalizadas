@@ -1,11 +1,14 @@
 import { create } from 'zustand'
 import type { Ingredient, Category } from '@/domain/catalog'
 import type { CompositionItem, Cardapio } from '@/domain/cardapio'
-import type { Customer, Fulfillment } from '@/domain/order'
+import type { Customer } from '@/domain/customer'
+import type { Fulfillment } from '@/domain/order'
+import type { FulfillmentZone } from '@/domain/fulfillment'
 import type { PricingConfig, CompositionRules, CustomerPricingRules } from '@/domain/pricing'
 import { services } from '@/infrastructure/ServiceFactory'
 
 export type WizardStep =
+  | 'lead-capture'
   | 'hero'
   | 'category'
   | 'ingredient'
@@ -32,12 +35,17 @@ interface WizardState {
 
   cardapios: Cardapio[]
 
-  customer: Customer
+  customer: Customer | null
   fulfillment: Fulfillment
+  selectedCitySlug: string | null
+  fulfillmentZones: FulfillmentZone[]
   notes: string
 
   navigate: (step: WizardStep, direction?: 'forward' | 'back') => void
   loadCatalog: () => Promise<void>
+  loadFulfillmentZones: () => Promise<void>
+  setCustomer: (customer: Customer) => void
+  updateCustomer: (data: Partial<Customer>) => void
   selectCategory: (cat: Category) => void
   selectIngredient: (id: string) => void
   selectPreparation: (id: string) => void
@@ -46,14 +54,14 @@ interface WizardState {
   editDraftItem: (ingredientId: string) => void
   finalizeCardapio: (quantity: number) => void
   resetDraft: () => void
-  updateCustomer: (data: Partial<Customer>) => void
   setFulfillment: (f: Fulfillment) => void
+  setSelectedCity: (slug: string) => void
   setNotes: (n: string) => void
   startNewCardapio: () => void
 }
 
 export const useWizardStore = create<WizardState>((set, get) => ({
-  step: 'hero',
+  step: 'lead-capture',
   direction: 'forward',
 
   catalog: [],
@@ -78,8 +86,10 @@ export const useWizardStore = create<WizardState>((set, get) => ({
 
   cardapios: [],
 
-  customer: { name: '', phone: '', address: '' },
+  customer: null,
   fulfillment: 'entrega',
+  selectedCitySlug: null,
+  fulfillmentZones: [],
   notes: '',
 
   navigate: (step, direction = 'forward') => set({ step, direction }),
@@ -93,6 +103,26 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       customerPricingRules: data.customerPricingRules,
     })
   },
+
+  loadFulfillmentZones: async () => {
+    try {
+      const zones = await services.zoneRepo.listActive()
+      set(s => ({
+        fulfillmentZones: zones,
+        selectedCitySlug: s.selectedCitySlug ?? zones[0]?.citySlug ?? null,
+      }))
+    } catch (err) {
+      console.error('Failed to load fulfillment zones:', err)
+    }
+  },
+
+  setCustomer: (customer) => set({ customer }),
+
+  updateCustomer: (data) => set(s => ({
+    customer: s.customer
+      ? { ...s.customer, ...data }
+      : { name: '', phone: '', ...data },
+  })),
 
   selectCategory: (cat) => set({ selectedCategory: cat, direction: 'forward', step: 'ingredient' }),
 
@@ -157,7 +187,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     set({ direction: 'forward', step: 'category' })
   },
 
-  updateCustomer: (data) => set(s => ({ customer: { ...s.customer, ...data } })),
   setFulfillment: (f) => set({ fulfillment: f }),
+  setSelectedCity: (slug) => set({ selectedCitySlug: slug }),
   setNotes: (n) => set({ notes: n }),
 }))

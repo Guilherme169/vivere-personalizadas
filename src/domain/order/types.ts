@@ -1,11 +1,7 @@
 import type { Cardapio } from '@/domain/cardapio'
+import type { Customer } from '@/domain/customer'
 
-export interface Customer {
-  name: string
-  phone: string
-  address?: string
-}
-
+export type { Customer }
 export type Fulfillment = 'entrega' | 'retirada'
 
 export interface Order {
@@ -14,5 +10,6 @@ export interface Order {
   cardapios: Cardapio[]
   customer: Customer
   fulfillment: Fulfillment
+  citySlug?: string
   notes?: string
 }

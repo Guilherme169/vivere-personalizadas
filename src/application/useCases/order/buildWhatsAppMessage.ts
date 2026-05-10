@@ -1,6 +1,8 @@
 import type { Cardapio } from '@/domain/cardapio'
 import type { Ingredient } from '@/domain/catalog'
-import type { Customer, Fulfillment } from '@/domain/order'
+import type { Customer } from '@/domain/customer'
+import type { Fulfillment } from '@/domain/order'
+import type { FulfillmentZone } from '@/domain/fulfillment'
 import type { PricingConfig, CustomerPricingRules, OrderPricing } from '@/domain/pricing'
 import { CATEGORY_LABEL } from '@/domain/catalog'
 import { calculateMealPrice, calculateOrderPricing, formatPrice99, formatBRL } from '@/domain/pricing'
@@ -52,6 +54,7 @@ export function buildWhatsAppMessage(
   catalog: Ingredient[],
   config: PricingConfig,
   customerRules: CustomerPricingRules,
+  zone: FulfillmentZone | null = null,
 ): WhatsAppPayload {
   const pricing: OrderPricing = calculateOrderPricing(cardapios, catalog, config, customerRules, fulfillment)
 
@@ -66,7 +69,12 @@ export function buildWhatsAppMessage(
 
   lines.push(`📦 Total: ${pricing.totalUnits} unidades`)
   lines.push(`💰 Subtotal marmitas: ${formatBRL(pricing.subtotalMarmitas)}`)
-  lines.push(pricing.frete === 0 ? '🚚 Frete: Frete grátis' : `🚚 Frete: ${formatBRL(pricing.frete)}`)
+
+  if (fulfillment === 'entrega' && zone?.requiresScheduling) {
+    lines.push('🚚 Frete: A combinar via WhatsApp')
+  } else {
+    lines.push(pricing.frete === 0 ? '🚚 Frete: Frete grátis' : `🚚 Frete: ${formatBRL(pricing.frete)}`)
+  }
 
   if (pricing.descontoPct > 0) {
     lines.push(`🏷️ Desconto: -${(pricing.descontoPct * 100).toFixed(0)}% (${formatBRL(pricing.descontoBRL)})`)
@@ -76,7 +84,19 @@ export function buildWhatsAppMessage(
   lines.push('')
   lines.push(`👤 ${customer.name}`)
   lines.push(`📞 ${customer.phone}`)
-  lines.push(fulfillment === 'retirada' ? '🏠 Vou retirar' : `🏠 ${customer.address ?? '—'}`)
+
+  if (fulfillment === 'retirada') {
+    lines.push('🏠 Vou retirar')
+  } else {
+    if (zone) {
+      lines.push(`🏙️ Cidade: ${zone.cityName}`)
+    }
+    lines.push(`🏠 Endereço: ${customer.address ?? '—'}`)
+    if (zone?.requiresScheduling) {
+      lines.push(`   ⚠ ${zone.deliveryFeeNote ?? 'Frete e dia de entrega combinados via WhatsApp'}`)
+    }
+  }
+
   lines.push(`📝 Observações: ${notes || '—'}`)
   lines.push('')
   lines.push('Aguardo confirmação do prazo e fechamento. Obrigado!')

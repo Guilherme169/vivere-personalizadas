@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, AlertTriangle } from 'lucide-react'
 import { AppHeader } from '@/features/shared/components/AppHeader'
 import { useWizardStore } from '@/features/meal-builder/store/wizardStore'
 import { buildWhatsAppMessage } from '@/application/useCases/order/buildWhatsAppMessage'
@@ -19,24 +19,45 @@ export function OrderSummary() {
   const [accordionOpen, setAccordionOpen] = useState(false)
   const {
     navigate, cardapios, catalog, pricingConfig, customerPricingRules,
-    customer, fulfillment, notes, updateCustomer, setFulfillment, setNotes,
+    customer, fulfillment, selectedCitySlug, fulfillmentZones,
+    notes, updateCustomer, setFulfillment, setSelectedCity, setNotes,
   } = useWizardStore()
 
-  const pricing = calculateOrderPricing(cardapios, catalog, pricingConfig, customerPricingRules, fulfillment)
+  const selectedZone = fulfillmentZones.find(z => z.citySlug === selectedCitySlug) ?? fulfillmentZones[0] ?? null
 
-  const canSubmit = customer.name.trim().length > 0 && customer.phone.replace(/\D/g, '').length >= 10
+  // Zone overrides delivery fee when entrega
+  const effectiveDeliveryFee = fulfillment === 'entrega' && selectedZone
+    ? selectedZone.deliveryFeeBRL
+    : customerPricingRules.deliveryFeeBRL
+
+  const effectiveRules = fulfillment === 'entrega' && selectedZone
+    ? { ...customerPricingRules, deliveryFeeBRL: effectiveDeliveryFee }
+    : customerPricingRules
+
+  const pricing = calculateOrderPricing(cardapios, catalog, pricingConfig, effectiveRules, fulfillment)
+  const totalUnits = pricing.totalUnits
+
+  const showZoneWarning = fulfillment === 'entrega' && selectedZone &&
+    (selectedZone.requiresScheduling || totalUnits < selectedZone.minUnits)
+
+  const canSubmit =
+    (customer?.name?.trim().length ?? 0) > 0 &&
+    (customer?.phone?.replace(/\D/g, '').length ?? 0) >= 10
 
   function handleSubmit() {
+    const orderCustomer = customer ?? { name: '', phone: '' }
     const payload = buildWhatsAppMessage(
-      cardapios, customer, fulfillment, notes, catalog, pricingConfig, customerPricingRules,
+      cardapios, orderCustomer, fulfillment, notes, catalog, pricingConfig, effectiveRules,
+      fulfillment === 'entrega' ? selectedZone : null,
     )
 
     const order = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       cardapios,
-      customer,
+      customer: orderCustomer,
       fulfillment,
+      citySlug: fulfillment === 'entrega' ? (selectedZone?.citySlug ?? undefined) : undefined,
       notes: notes || undefined,
     }
     services.orderRepo.persist(order).catch(err => {
@@ -122,7 +143,9 @@ export function OrderSummary() {
             <div className="flex justify-between">
               <span className="text-texto-suave">Frete</span>
               <span className={pricing.frete === 0 ? 'text-sucesso' : 'text-verde-escuro'}>
-                {pricing.frete === 0 ? 'Grátis' : formatBRL(pricing.frete)}
+                {fulfillment === 'entrega' && selectedZone?.requiresScheduling
+                  ? 'A combinar via WhatsApp'
+                  : pricing.frete === 0 ? 'Grátis' : formatBRL(pricing.frete)}
               </span>
             </div>
             <div className="border-t border-borda pt-2 flex justify-between font-semibold text-base">
@@ -131,7 +154,6 @@ export function OrderSummary() {
             </div>
           </div>
 
-          {/* Accordion "Como calculamos" */}
           <button
             onClick={() => setAccordionOpen(o => !o)}
             className="flex items-center gap-1 text-xs text-texto-suave mt-3"
@@ -156,7 +178,7 @@ export function OrderSummary() {
             <input
               type="text"
               placeholder="Seu nome completo"
-              value={customer.name}
+              value={customer?.name ?? ''}
               onChange={e => updateCustomer({ name: e.target.value })}
               className="w-full h-12 rounded-2xl bg-creme border border-borda px-4 text-[15px] placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-verde-escuro/30"
             />
@@ -167,7 +189,7 @@ export function OrderSummary() {
             <input
               type="tel"
               placeholder="(51) 99999-9999"
-              value={customer.phone}
+              value={customer?.phone ?? ''}
               onChange={e => updateCustomer({ phone: maskPhone(e.target.value) })}
               className="w-full h-12 rounded-2xl bg-creme border border-borda px-4 text-[15px] placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-verde-escuro/30"
             />
@@ -194,16 +216,40 @@ export function OrderSummary() {
           </div>
 
           {fulfillment === 'entrega' && (
-            <div>
-              <label className="text-xs font-medium text-texto-suave uppercase tracking-wide block mb-1.5">Endereço</label>
-              <input
-                type="text"
-                placeholder="Rua, número, bairro, cidade"
-                value={customer.address ?? ''}
-                onChange={e => updateCustomer({ address: e.target.value })}
-                className="w-full h-12 rounded-2xl bg-creme border border-borda px-4 text-[15px] placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-verde-escuro/30"
-              />
-            </div>
+            <>
+              {fulfillmentZones.length > 0 && (
+                <div>
+                  <label className="text-xs font-medium text-texto-suave uppercase tracking-wide block mb-1.5">Cidade</label>
+                  <select
+                    value={selectedCitySlug ?? ''}
+                    onChange={e => setSelectedCity(e.target.value)}
+                    className="w-full h-12 rounded-2xl bg-creme border border-borda px-4 text-[15px] text-verde-escuro focus:outline-none focus:ring-2 focus:ring-verde-escuro/30 appearance-none"
+                  >
+                    {fulfillmentZones.map(z => (
+                      <option key={z.citySlug} value={z.citySlug}>{z.cityName}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {showZoneWarning && selectedZone?.deliveryFeeNote && (
+                <div className="flex items-start gap-2 rounded-2xl bg-yellow-50 border border-yellow-200 px-4 py-3">
+                  <AlertTriangle size={16} className="text-yellow-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-yellow-800 leading-snug">{selectedZone.deliveryFeeNote}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="text-xs font-medium text-texto-suave uppercase tracking-wide block mb-1.5">Endereço</label>
+                <input
+                  type="text"
+                  placeholder="Rua, número, bairro"
+                  value={customer?.address ?? ''}
+                  onChange={e => updateCustomer({ address: e.target.value })}
+                  className="w-full h-12 rounded-2xl bg-creme border border-borda px-4 text-[15px] placeholder:text-texto-suave focus:outline-none focus:ring-2 focus:ring-verde-escuro/30"
+                />
+              </div>
+            </>
           )}
 
           <div>
@@ -219,7 +265,6 @@ export function OrderSummary() {
         </div>
       </div>
 
-      {/* Sticky CTA */}
       <div
         className="fixed bottom-0 inset-x-0 bg-surface/95 backdrop-blur border-t border-borda px-5 py-4 flex flex-col gap-2 z-40 shadow-lg"
         style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}

@@ -11,6 +11,7 @@ import { RegrasClienteTab } from './tabs/RegrasClienteTab'
 import { IngredientesTab } from './tabs/IngredientesTab'
 import { PreviewTab } from './tabs/PreviewTab'
 import { PedidosTab } from './tabs/PedidosTab'
+import { ZonasTab } from './tabs/ZonasTab'
 
 const ALL_TABS = [
   { value: 'custos', label: 'Custos' },
@@ -19,6 +20,7 @@ const ALL_TABS = [
   { value: 'ingredientes', label: 'Ingredientes' },
   { value: 'preview', label: 'Prévia' },
   { value: 'pedidos', label: 'Pedidos' },
+  { value: 'zonas', label: 'Zonas' },
 ] as const
 
 const ATENDENTE_TABS: ReadonlySet<string> = new Set(['pedidos'])
@@ -127,6 +129,7 @@ export function AdminPanel() {
           <TabsContent value="ingredientes"><IngredientesTab /></TabsContent>
           <TabsContent value="preview"><PreviewTab /></TabsContent>
           <TabsContent value="pedidos"><PedidosTab /></TabsContent>
+          <TabsContent value="zonas"><ZonasTab /></TabsContent>
         </Tabs>
       </div>
     </div>

@@ -23,7 +23,7 @@ export function ConfirmationScreen() {
       </h1>
 
       <p className="text-[17px] text-texto-suave leading-relaxed max-w-xs mb-2">
-        Olá, <strong className="text-verde-escuro">{customer.name || 'cliente'}</strong>!
+        Olá, <strong className="text-verde-escuro">{customer?.name || 'cliente'}</strong>!
         Em breve nosso atendente vai confirmar seu pedido pelo WhatsApp.
       </p>
 

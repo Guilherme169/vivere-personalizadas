@@ -1,13 +1,10 @@
-import { useEffect } from 'react'
-import { Check } from 'lucide-react'
+import { Check, ChevronLeft } from 'lucide-react'
 import { Logo } from '@/features/shared/components/Logo'
+import { AppFooter } from '@/features/shared/components/AppFooter'
 import { useWizardStore } from '../store/wizardStore'
 
 export function HeroScreen() {
-  const { navigate, loadCatalog } = useWizardStore()
-
-  // Pre-load catalog while user reads the hero, so it's ready on click
-  useEffect(() => { loadCatalog() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const { navigate, customer } = useWizardStore()
 
   function handleStart() {
     navigate('category', 'forward')
@@ -15,9 +12,24 @@ export function HeroScreen() {
 
   return (
     <main className="min-h-dvh bg-creme flex flex-col">
-      <section className="flex flex-col flex-1 items-center justify-center px-6 pt-16 pb-36 text-center animate-fade-up">
-        {/* Lockup com slogan — uma única âncora visual da marca */}
+      <div className="px-5 pt-4">
+        <button
+          onClick={() => navigate('lead-capture', 'back')}
+          className="h-9 w-9 rounded-xl bg-surface border border-borda flex items-center justify-center text-verde-escuro hover:bg-verde-escuro/5 transition-colors"
+          aria-label="Voltar"
+        >
+          <ChevronLeft size={20} strokeWidth={2} />
+        </button>
+      </div>
+
+      <section className="flex flex-col flex-1 items-center justify-center px-6 pt-6 pb-36 text-center animate-fade-up">
         <Logo withSlogan size="xl" className="mb-10" />
+
+        {customer && (
+          <p className="text-base font-medium text-verde-vivo mb-2">
+            Olá, {customer.name}!
+          </p>
+        )}
 
         <p className="text-xs font-medium uppercase tracking-[0.08em] text-texto-suave mb-4">
           Configurador de marmitas
@@ -54,6 +66,8 @@ export function HeroScreen() {
           </li>
         </ul>
       </section>
+
+      <AppFooter />
 
       <div
         className="fixed bottom-0 inset-x-0 bg-surface/95 backdrop-blur border-t border-borda px-5 py-4 flex flex-col gap-2 z-40"
