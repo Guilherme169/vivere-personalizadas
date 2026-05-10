@@ -11,6 +11,9 @@ type DbIngredient = {
   base_yield: number
   preparations: Ingredient['preparations']
   diet_flags: string[]
+  active: boolean | null
+  is_popular: boolean | null
+  position: number | null
 }
 
 function toDomain(row: DbIngredient): Ingredient {
@@ -22,6 +25,9 @@ function toDomain(row: DbIngredient): Ingredient {
     baseYield: row.base_yield,
     preparations: row.preparations,
     dietFlags: row.diet_flags as Ingredient['dietFlags'],
+    active: row.active ?? true,
+    isPopular: row.is_popular ?? false,
+    position: row.position ?? undefined,
   }
 }
 
@@ -30,8 +36,9 @@ export const IngredientRepositorySupabase: IngredientRepository = {
     const [ingredientsRes, settingsRes] = await Promise.all([
       supabase
         .from('ingredients')
-        .select('external_id, name, category, price_per_kg, base_yield, preparations, diet_flags')
-        .order('position')
+        .select('external_id, name, category, price_per_kg, base_yield, preparations, diet_flags, active, is_popular, position')
+        .eq('active', true)
+        .order('position', { nullsFirst: false })
         .order('name'),
       supabase
         .from('app_settings')

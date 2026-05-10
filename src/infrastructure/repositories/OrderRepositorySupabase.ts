@@ -4,7 +4,7 @@ import { normalizePhone } from '@/domain/customer'
 import { supabase } from '../supabase/client'
 
 export const OrderRepositorySupabase: OrderRepository = {
-  async persist(order: Order): Promise<void> {
+  async persist(order: Order): Promise<{ id: string; code: string }> {
     const phone = normalizePhone(order.customer.phone)
 
     // Use customer.id from lead-capture if available; otherwise upsert for safety
@@ -24,7 +24,7 @@ export const OrderRepositorySupabase: OrderRepository = {
 
     const totalUnits = order.cardapios.reduce((sum, c) => sum + c.quantity, 0)
 
-    const { error: orderError } = await supabase.from('orders').insert({
+    const { data: orderData, error: orderError } = await supabase.from('orders').insert({
       id: order.id,
       customer_id: customerId,
       customer_name: order.customer.name,
@@ -39,9 +39,13 @@ export const OrderRepositorySupabase: OrderRepository = {
       payment_method: order.paymentMethod ?? null,
       status: 'novo',
       whatsapp_sent_at: new Date().toISOString(),
-    })
+    }).select('id, code').single()
 
     if (orderError) throw orderError
+    return {
+      id: (orderData as Record<string, unknown>).id as string,
+      code: ((orderData as Record<string, unknown>).code as string | null) ?? '',
+    }
   },
 
   async list(): Promise<Order[]> {

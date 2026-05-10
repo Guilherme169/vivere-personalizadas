@@ -64,6 +64,7 @@ interface WizardState {
   setNotes: (n: string) => void
   setPaymentMethod: (m: 'pix' | 'cartao' | 'dinheiro') => void
   startNewCardapio: () => void
+  loadOrderIntoDraft: (order: Order) => void
 }
 
 export const useWizardStore = create<WizardState>((set, get) => ({
@@ -208,4 +209,17 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setSelectedCity: (slug) => set({ selectedCitySlug: slug }),
   setNotes: (n) => set({ notes: n }),
   setPaymentMethod: (m) => set({ paymentMethod: m }),
+
+  loadOrderIntoDraft: (order) => {
+    set({
+      cardapios: order.cardapios.map(c => ({ ...c })),
+      fulfillment: order.fulfillment,
+      notes: order.notes ?? '',
+      paymentMethod: order.paymentMethod ?? null,
+      draftItems: [],
+      selectedCategory: null,
+      selectedIngredientId: null,
+      selectedPreparationId: null,
+    })
+  },
 }))

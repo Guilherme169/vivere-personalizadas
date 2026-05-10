@@ -17,6 +17,7 @@ function maskPhone(value: string): string {
 
 export function OrderSummary() {
   const [accordionOpen, setAccordionOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const {
     navigate, cardapios, catalog, pricingConfig, customerPricingRules,
     customer, fulfillment, selectedCitySlug, fulfillmentZones,
@@ -43,15 +44,13 @@ export function OrderSummary() {
   const canSubmit =
     (customer?.name?.trim().length ?? 0) > 0 &&
     (customer?.phone?.replace(/\D/g, '').length ?? 0) >= 10 &&
-    paymentMethod !== null
+    paymentMethod !== null &&
+    !submitting
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (!canSubmit) return
+    setSubmitting(true)
     const orderCustomer = customer ?? { name: '', phone: '' }
-    const payload = buildWhatsAppMessage(
-      cardapios, orderCustomer, fulfillment, notes, catalog, pricingConfig, effectiveRules,
-      fulfillment === 'entrega' ? selectedZone : null,
-      paymentMethod ?? undefined,
-    )
 
     const order = {
       id: crypto.randomUUID(),
@@ -63,10 +62,22 @@ export function OrderSummary() {
       notes: notes || undefined,
       paymentMethod: paymentMethod ?? undefined,
     }
-    services.orderRepo.persist(order).catch(err => {
+
+    let code = ''
+    try {
+      const result = await services.orderRepo.persist(order)
+      code = result.code
+    } catch (err) {
       console.error('Failed to persist order:', err)
       alert('Não conseguimos salvar seu pedido no sistema, mas o WhatsApp foi aberto. Por favor, envie a mensagem para nosso atendente.')
-    })
+    }
+
+    const payload = buildWhatsAppMessage(
+      cardapios, orderCustomer, fulfillment, notes, catalog, pricingConfig, effectiveRules,
+      fulfillment === 'entrega' ? selectedZone : null,
+      paymentMethod ?? undefined,
+      code,
+    )
 
     window.open(payload.url, '_blank')
     navigate('confirmation', 'forward')
@@ -310,7 +321,7 @@ export function OrderSummary() {
               : 'bg-laranja/40 text-white cursor-not-allowed',
           ].join(' ')}
         >
-          Enviar pedido pelo WhatsApp
+          {submitting ? 'Salvando pedido…' : 'Enviar pedido pelo WhatsApp'}
         </button>
         <p className="text-center text-xs text-texto-suave">
           {canSubmit

@@ -17,6 +17,8 @@ export interface Ingredient {
   preparations: Preparation[]
   dietFlags: DietFlag[]
   active?: boolean
+  isPopular?: boolean
+  position?: number
 }
 
 export const CATEGORY_LABEL: Record<Category, string> = {

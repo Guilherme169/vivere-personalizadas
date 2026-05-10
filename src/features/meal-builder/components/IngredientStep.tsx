@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Flame } from 'lucide-react'
 import { AppHeader } from '@/features/shared/components/AppHeader'
 import { CategoryIcon } from '@/features/shared/components/CategoryIcon'
 import { useWizardStore } from '../store/wizardStore'
@@ -16,7 +16,14 @@ export function IngredientStep() {
   } = useWizardStore()
 
   const isSeasoning = selectedCategory === 'seasoning'
-  const ingredients = catalog.filter(i => i.category === selectedCategory && i.active !== false)
+  const ingredients = catalog
+    .filter(i => i.category === selectedCategory && i.active !== false)
+    .slice()
+    .sort((a, b) => {
+      if (a.isPopular !== b.isPopular) return a.isPopular ? -1 : 1
+      if ((a.position ?? 100) !== (b.position ?? 100)) return (a.position ?? 100) - (b.position ?? 100)
+      return a.name.localeCompare(b.name, 'pt-BR')
+    })
   const filtered = query.trim()
     ? ingredients.filter(i => i.name.toLowerCase().includes(query.toLowerCase()))
     : ingredients
@@ -79,6 +86,11 @@ export function IngredientStep() {
                   <CategoryIcon category={ing.category} size={22} />
                 </div>
                 <div className="flex-1 min-w-0">
+                  {ing.isPopular && (
+                    <span className="inline-flex items-center gap-1 h-6 px-2 rounded-full bg-laranja/15 text-laranja-hover text-[11px] font-medium mb-1">
+                      <Flame size={11} strokeWidth={2} /> Mais pedido
+                    </span>
+                  )}
                   <p className="font-medium text-[15px] text-verde-escuro truncate">{ing.name}</p>
                   {!isSeasoning && (
                     <p className="text-xs text-texto-suave mt-0.5">

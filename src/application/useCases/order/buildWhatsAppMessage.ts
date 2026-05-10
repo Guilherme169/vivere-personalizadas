@@ -55,10 +55,15 @@ export function buildWhatsAppMessage(
   customerRules: CustomerPricingRules,
   zone: FulfillmentZone | null = null,
   paymentMethod?: 'pix' | 'cartao' | 'dinheiro',
+  code = '',
 ): WhatsAppPayload {
   const pricing: OrderPricing = calculateOrderPricing(cardapios, catalog, config, customerRules, fulfillment)
 
   const lines: string[] = []
+  if (code) {
+    lines.push(`🧾 #${code}`)
+    lines.push('─────────────────')
+  }
   lines.push('Olá, Vivere! Quero pedir minhas marmitas personalizadas.')
   lines.push('')
 
