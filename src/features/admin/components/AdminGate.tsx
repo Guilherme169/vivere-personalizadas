@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Lock } from 'lucide-react'
 import { Logo } from '@/features/shared/components/Logo'
-import { supabase } from '@/infrastructure/supabase/client'
+import { supabase, getUserRoleFromSession } from '@/infrastructure/supabase/client'
+import { useAdminStore } from '../store/adminStore'
 import { AdminPanel } from './AdminPanel'
 
 export function AdminGate() {
+  const setRole = useAdminStore(s => s.setRole)
   const [checking, setChecking] = useState(true)
   const [authenticated, setAuthenticated] = useState(false)
   const [email, setEmail] = useState('')
@@ -14,16 +16,18 @@ export function AdminGate() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
+      setRole(data.session ? getUserRoleFromSession(data.session) : null)
       setAuthenticated(!!data.session)
       setChecking(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setRole(session ? getUserRoleFromSession(session) : null)
       setAuthenticated(!!session)
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [setRole])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

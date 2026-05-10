@@ -7,7 +7,8 @@ import { CATEGORY_LABEL } from '@/domain/catalog'
 import { DIET_FLAG_LABEL } from '@/domain/meal'
 
 export function IngredientesTab() {
-  const { data, update } = useAdminStore()
+  const { data, update, role } = useAdminStore()
+  const canWrite = role !== 'atendente'
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Ingredient | undefined>(undefined)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -68,7 +69,8 @@ export function IngredientesTab() {
       <div className="flex gap-2">
         <button
           onClick={openNew}
-          className="flex items-center gap-1.5 h-9 px-4 rounded-xl bg-verde-escuro text-white text-sm font-medium hover:bg-verde-escuro-hover active:scale-[0.98] transition-all"
+          disabled={!canWrite}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-xl bg-verde-escuro text-white text-sm font-medium hover:bg-verde-escuro-hover active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Plus size={15} /> Adicionar
         </button>
@@ -80,7 +82,8 @@ export function IngredientesTab() {
         </button>
         <button
           onClick={() => fileRef.current?.click()}
-          className="flex items-center gap-1.5 h-9 px-4 rounded-xl border border-borda text-texto-suave text-sm font-medium hover:bg-verde-escuro/5 transition-colors"
+          disabled={!canWrite}
+          className="flex items-center gap-1.5 h-9 px-4 rounded-xl border border-borda text-texto-suave text-sm font-medium hover:bg-verde-escuro/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Upload size={15} /> Importar
         </button>
@@ -111,10 +114,18 @@ export function IngredientesTab() {
               )}
             </div>
             <div className="flex gap-1 shrink-0">
-              <button onClick={() => openEdit(ing)} className="h-8 w-8 rounded-xl bg-verde-escuro/8 flex items-center justify-center text-verde-escuro hover:bg-verde-escuro/15 transition-colors">
+              <button
+                onClick={() => openEdit(ing)}
+                disabled={!canWrite}
+                className="h-8 w-8 rounded-xl bg-verde-escuro/8 flex items-center justify-center text-verde-escuro hover:bg-verde-escuro/15 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 <Pencil size={14} />
               </button>
-              <button onClick={() => handleDelete(ing.id)} className="h-8 w-8 rounded-xl bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100 transition-colors">
+              <button
+                onClick={() => handleDelete(ing.id)}
+                disabled={!canWrite}
+                className="h-8 w-8 rounded-xl bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 <Trash2 size={14} />
               </button>
             </div>

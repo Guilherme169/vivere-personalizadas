@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { CatalogData } from '@/application/ports'
 import { services } from '@/infrastructure/ServiceFactory'
+import type { AdminRole } from '@/features/admin/types'
 
 const defaultData: CatalogData = {
   ingredients: [],
@@ -23,6 +24,8 @@ interface AdminState {
   data: CatalogData
   loading: boolean
   dirty: boolean
+  role: AdminRole | null
+  setRole: (role: AdminRole | null) => void
   reload: () => Promise<void>
   update: (patch: Partial<CatalogData>) => void
   persist: () => Promise<void>
@@ -32,6 +35,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   data: defaultData,
   loading: false,
   dirty: false,
+  role: null,
+  setRole: (role) => set({ role }),
 
   reload: async () => {
     set({ loading: true })

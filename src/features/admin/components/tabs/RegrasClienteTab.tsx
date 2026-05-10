@@ -11,8 +11,9 @@ const FIELDS: { key: Field; label: string; hint: string; step: number }[] = [
 ]
 
 export function RegrasClienteTab() {
-  const { data, update } = useAdminStore()
+  const { data, update, role } = useAdminStore()
   const rules = data.customerPricingRules
+  const canWrite = role !== 'atendente'
 
   function set(key: Field, value: string) {
     const n = parseFloat(value)
@@ -31,8 +32,9 @@ export function RegrasClienteTab() {
             min={0}
             step={f.step}
             value={rules[f.key]}
-            onChange={e => set(f.key, e.target.value)}
-            className="w-full h-11 rounded-2xl bg-creme border border-borda px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-verde-escuro/30"
+            readOnly={!canWrite}
+            onChange={e => canWrite && set(f.key, e.target.value)}
+            className="w-full h-11 rounded-2xl bg-creme border border-borda px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-verde-escuro/30 read-only:opacity-60 read-only:cursor-not-allowed"
           />
           {f.hint && <p className="text-xs text-texto-suave">{f.hint}</p>}
         </div>

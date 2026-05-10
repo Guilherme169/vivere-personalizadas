@@ -12,11 +12,33 @@ import { IngredientesTab } from './tabs/IngredientesTab'
 import { PreviewTab } from './tabs/PreviewTab'
 import { PedidosTab } from './tabs/PedidosTab'
 
+const ALL_TABS = [
+  { value: 'custos', label: 'Custos' },
+  { value: 'operacional', label: 'Operacional' },
+  { value: 'regras', label: 'Regras' },
+  { value: 'ingredientes', label: 'Ingredientes' },
+  { value: 'preview', label: 'Prévia' },
+  { value: 'pedidos', label: 'Pedidos' },
+] as const
+
+const ATENDENTE_TABS: ReadonlySet<string> = new Set(['pedidos'])
+
 export function AdminPanel() {
-  const { dirty, persist, reload, loading } = useAdminStore()
+  const { dirty, persist, reload, loading, role } = useAdminStore()
   const [saving, setSaving] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
 
   useEffect(() => { reload() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUserEmail(data.session?.user?.email ?? null)
+    })
+  }, [])
+
+  const isAtendente = role === 'atendente'
+  const visibleTabs = ALL_TABS.filter(t => !isAtendente || ATENDENTE_TABS.has(t.value))
+  const defaultTab = visibleTabs[0]?.value ?? 'pedidos'
 
   async function handleSave() {
     setSaving(true)
@@ -33,6 +55,8 @@ export function AdminPanel() {
     await supabase.auth.signOut()
   }
 
+  const roleLabel = isAtendente ? 'Atendente' : 'Sócio'
+
   return (
     <div className="min-h-dvh bg-creme">
       <header className="sticky top-0 z-10 bg-creme/90 backdrop-blur-sm border-b border-borda px-5 py-3 flex items-center justify-between">
@@ -41,23 +65,31 @@ export function AdminPanel() {
             <ChevronLeft size={20} strokeWidth={2} />
           </Link>
           <Logo variant="verde" size="sm" />
-          <span className="text-sm font-medium text-texto-suave">Admin</span>
+          {userEmail && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-texto-suave bg-surface border border-borda rounded-full px-3 py-1">
+              <span className="text-verde-escuro font-semibold">{roleLabel}</span>
+              <span>·</span>
+              <span className="truncate max-w-[160px]">{userEmail}</span>
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleSave}
-            disabled={!dirty || saving || loading}
-            className={[
-              'flex items-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium transition-all active:scale-[0.98]',
-              dirty && !saving
-                ? 'bg-laranja text-white shadow-cta hover:bg-laranja-hover'
-                : 'bg-surface border border-borda text-texto-suave opacity-50 cursor-not-allowed',
-            ].join(' ')}
-          >
-            <Save size={15} />
-            {saving ? 'Salvando…' : dirty ? 'Salvar' : 'Salvo'}
-          </button>
+          {!isAtendente && (
+            <button
+              onClick={handleSave}
+              disabled={!dirty || saving || loading}
+              className={[
+                'flex items-center gap-1.5 h-9 px-4 rounded-xl text-sm font-medium transition-all active:scale-[0.98]',
+                dirty && !saving
+                  ? 'bg-laranja text-white shadow-cta hover:bg-laranja-hover'
+                  : 'bg-surface border border-borda text-texto-suave opacity-50 cursor-not-allowed',
+              ].join(' ')}
+            >
+              <Save size={15} />
+              {saving ? 'Salvando…' : dirty ? 'Salvar' : 'Salvo'}
+            </button>
+          )}
 
           <button
             onClick={handleSignOut}
@@ -76,16 +108,9 @@ export function AdminPanel() {
       )}
 
       <div className="px-4 py-5">
-        <Tabs defaultValue="custos" className="w-full">
+        <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="flex w-full overflow-x-auto no-scrollbar bg-surface border border-borda rounded-2xl p-1 gap-1 mb-6">
-            {[
-              { value: 'custos', label: 'Custos' },
-              { value: 'operacional', label: 'Operacional' },
-              { value: 'regras', label: 'Regras' },
-              { value: 'ingredientes', label: 'Ingredientes' },
-              { value: 'preview', label: 'Prévia' },
-              { value: 'pedidos', label: 'Pedidos' },
-            ].map(t => (
+            {visibleTabs.map(t => (
               <TabsTrigger
                 key={t.value}
                 value={t.value}

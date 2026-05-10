@@ -13,8 +13,9 @@ const FIELDS: { key: Field; label: string; min: number; step: number }[] = [
 ]
 
 export function OperacionalTab() {
-  const { data, update } = useAdminStore()
+  const { data, update, role } = useAdminStore()
   const config = data.pricingConfig
+  const canWrite = role !== 'atendente'
 
   function set(key: Field, value: string) {
     const n = parseFloat(value)
@@ -36,8 +37,9 @@ export function OperacionalTab() {
             min={f.min}
             step={f.step}
             value={config[f.key]}
-            onChange={e => set(f.key, e.target.value)}
-            className="w-full h-11 rounded-2xl bg-creme border border-borda px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-verde-escuro/30"
+            readOnly={!canWrite}
+            onChange={e => canWrite && set(f.key, e.target.value)}
+            className="w-full h-11 rounded-2xl bg-creme border border-borda px-4 text-[15px] focus:outline-none focus:ring-2 focus:ring-verde-escuro/30 read-only:opacity-60 read-only:cursor-not-allowed"
           />
         </div>
       ))}
